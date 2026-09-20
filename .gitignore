@@ -25,7 +25,7 @@ out/*
 
 # Runtime-Generated Artifacts
 llm_provenance.jsonl
-.loop/DECISIONS.md
+.loop/
 profile/static/static.json
 
 # User Uploads

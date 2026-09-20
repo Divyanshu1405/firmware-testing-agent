@@ -91,6 +91,8 @@ def render_report(state: "AgentState", demo_failure: bool = False) -> str:
         plot_b64 = ""
         if trace:
             try:
+                import matplotlib
+                matplotlib.use("Agg")
                 import matplotlib.pyplot as plt
                 import io
                 import base64

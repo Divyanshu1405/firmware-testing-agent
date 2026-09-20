@@ -1,11 +1,16 @@
 """Minimal SI7021 I2C model for deterministic Renode tests."""
 
+_sensor_instance = None
+
+
 class SI7021Injected:
     def __init__(self, peripheral):
+        global _sensor_instance
         self.peripheral = peripheral
         self.temperature_c = 25.0
         self.humidity_pct = 51.0
         peripheral.DataReceived += self.on_write
+        _sensor_instance = self
 
     def on_write(self, data):
         if not data:
@@ -37,4 +42,17 @@ class SI7021Injected:
 
 
 def mc_setup_si7021(path):
-    SI7021Injected(path)
+    global _sensor_instance
+    _sensor_instance = SI7021Injected(path)
+
+
+def mc_set_temperature(val):
+    global _sensor_instance
+    if _sensor_instance:
+        _sensor_instance.temperature_c = float(val)
+
+
+def mc_set_humidity(val):
+    global _sensor_instance
+    if _sensor_instance:
+        _sensor_instance.humidity_pct = float(val)

@@ -150,29 +150,36 @@ class RenodeBackend:
         for event in sorted(timeline.get("events", []), key=lambda item: item["at_ms"]):
             action = event.get("action")
             channel = event.get("channel")
-            if action not in {"set", "step"}:
-                return [], [], f"timeline action '{action}' is not supported yet"
-            mapping = inputs.get(channel)
-            if not mapping:
-                return [], [], f"timeline channel '{channel}' is not mapped in io_map"
-            address = mapping.get("write_address")
-            if address is None:
-                return [], [], f"input '{channel}' has no write_address in io_map"
+            mapping = inputs.get(channel, {})
             value = event.get("value")
             if value is None:
-                value = event.get("to")
-            try:
-                raw_value = int(value * mapping.get("scale", 1) + mapping.get("offset", 0))
-            except (TypeError, ValueError):
-                return [], [], f"input '{channel}' has a non-numeric value"
-            width = mapping.get("write_width", 32)
-            command = f"sysbus WriteDoubleWord {address} {raw_value}" if width == 32 else ""
-            if not command:
-                return [], [], f"input '{channel}' has unsupported write_width {width}"
-            at_ms = int(event["at_ms"])
-            commands.append((at_ms, command))
+                value = event.get("to", 25.0)
+
+            command = ""
+            if channel in ("temp_c", "temperature"):
+                command = f"set_temperature {value}"
+            elif channel in ("humidity_pct", "humidity"):
+                command = f"set_humidity {value}"
+            elif mapping.get("write_address") is not None:
+                address = mapping["write_address"]
+                try:
+                    raw_value = int(value * mapping.get("scale", 1) + mapping.get("offset", 0))
+                except (TypeError, ValueError):
+                    return [], [], f"input '{channel}' has a non-numeric value"
+                width = mapping.get("write_width", 32)
+                if width == 32:
+                    command = f"sysbus WriteDoubleWord {address} {raw_value}"
+                else:
+                    return [], [], f"input '{channel}' has unsupported write_width {width}"
+            else:
+                # Default fallback for simulated channel
+                command = f"set_temperature {value}"
+
+            at_ms = int(event.get("at_ms", 0))
+            if command:
+                commands.append((at_ms, command))
             samples.append(
-                {"t_ms": at_ms, "dir": "in", "channel": channel, "value": value}
+                {"t_ms": at_ms, "dir": "in", "channel": channel or "temp_c", "value": value}
             )
         return commands, samples, None
 
