@@ -1,0 +1,25 @@
+{
+    "test_id": "MC_T04_ADC",
+    "requirement_ids": [
+        "R_MC_4"
+    ],
+    "duration_ms": 3500,
+    "events": [
+        {
+            "at_ms": 1000,
+            "action": "spike",
+            "channel": "adc_ch1",
+            "value": 4095,
+            "for_ms": 50,
+            "expect_uart_contains": "ADC: FILTER OUTLIER"
+        },
+        {
+            "at_ms": 2000,
+            "action": "drift",
+            "channel": "adc_ch1",
+            "to": 2000,
+            "over_ms": 1000,
+            "expect_uart_contains": "ADC: AVG OK"
+        }
+    ]
+}

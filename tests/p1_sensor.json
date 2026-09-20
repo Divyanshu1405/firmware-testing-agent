@@ -1,0 +1,24 @@
+{
+    "test_id": "MC_T01_SENSOR",
+    "requirement_ids": [
+        "R_MC_1"
+    ],
+    "duration_ms": 3000,
+    "events": [
+        {
+            "at_ms": 500,
+            "action": "dropout",
+            "channel": "i2c_sda",
+            "for_ms": 500,
+            "expect_uart_contains": "SENSOR: TIMEOUT"
+        },
+        {
+            "at_ms": 1500,
+            "action": "stuck",
+            "channel": "i2c_sda",
+            "value": "low",
+            "for_ms": 500,
+            "expect_uart_contains": "SENSOR: RECOVERY"
+        }
+    ]
+}
