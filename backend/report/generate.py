@@ -1,5 +1,5 @@
-"""Report-generation placeholder."""
+"""Compatibility export for report generation."""
 
+from agent.steps.report import render_report
 
-def render_report(context: dict) -> str:
-    raise NotImplementedError("Implement HTML report generation here.")
+__all__ = ["render_report"]

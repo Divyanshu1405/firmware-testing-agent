@@ -43,6 +43,19 @@ VECTOR_NAMES = [
 ]
 
 
+def is_elf_file(firmware_path: Path | str) -> bool:
+    """Check if the file starts with the standard ELF magic bytes."""
+    path = Path(firmware_path).resolve()
+    if not path.is_file():
+        return False
+    try:
+        with open(path, "rb") as f:
+            magic = f.read(4)
+            return magic == b"\x7fELF"
+    except OSError:
+        return False
+
+
 def extract_strings(data: bytes, min_len: int = 4) -> List[str]:
     """Extract printable ASCII strings of at least min_len length."""
     pattern = re.compile(rb"[\x20-\x7e]{" + str(min_len).encode() + rb",}")
@@ -63,11 +76,62 @@ def extract_vector_table(elf: ELFFile) -> Dict[str, str]:
     return vector_table
 
 
+def detect_peripherals(symbols: List[str], strings: List[str]) -> Dict[str, List[str]]:
+    """Infer referenced peripherals and subsystem clues from symbols and literals."""
+    peripherals: Dict[str, List[str]] = {
+        "uart": [],
+        "i2c": [],
+        "spi": [],
+        "gpio": [],
+        "sensors": [],
+        "fault_handlers": [],
+    }
+
+    sym_lower = {s.lower(): s for s in symbols}
+    for lower_name, orig in sym_lower.items():
+        if "uart" in lower_name or "usart" in lower_name:
+            peripherals["uart"].append(orig)
+        if "i2c" in lower_name:
+            peripherals["i2c"].append(orig)
+        if "spi" in lower_name:
+            peripherals["spi"].append(orig)
+        if "gpio" in lower_name:
+            peripherals["gpio"].append(orig)
+        if any(sens in lower_name for sens in ("si7021", "sensor", "temp", "humid", "bme", "sht")):
+            peripherals["sensors"].append(orig)
+        if any(f in lower_name for f in ("hardfault", "busfault", "usagefault", "memmanage", "nmi", "error_handler")):
+            peripherals["fault_handlers"].append(orig)
+
+    for s in strings:
+        s_lower = s.lower()
+        if "si7021" in s_lower and "si7021" not in peripherals["sensors"]:
+            peripherals["sensors"].append("SI7021 (string literal)")
+        if any(k in s_lower for k in ("humidity", "temperature")):
+            if "Environmental Telemetry (strings)" not in peripherals["sensors"]:
+                peripherals["sensors"].append("Environmental Telemetry (strings)")
+
+    for k in peripherals:
+        peripherals[k] = sorted(set(peripherals[k]))
+    return peripherals
+
+
 def analyze_firmware(firmware_path: Path | str) -> Dict[str, Any]:
     """Perform comprehensive static analysis of a firmware ELF binary."""
+    """Perform comprehensive static analysis of a firmware ELF binary.
+
+    Raises:
+        FileNotFoundError: If the firmware file does not exist.
+        ValueError: If the file is not a valid ELF binary format.
+    """
     path = Path(firmware_path).resolve()
     if not path.is_file():
         raise FileNotFoundError(f"Firmware ELF not found: {path}")
+
+    if not is_elf_file(path):
+        raise ValueError(
+            f"Invalid firmware format for '{path.name}'. Expected a valid ELF binary "
+            f"(starts with '\\x7fELF'), but file is not a supported ELF format."
+        )
 
     with open(path, "rb") as f:
         elf = ELFFile(f)
@@ -91,6 +155,7 @@ def analyze_firmware(firmware_path: Path | str) -> Dict[str, Any]:
             },
             "has_debug_info": False,
             "strings": [],
+            "detected_peripherals": {},
         }
 
         # 2. Section Analysis
@@ -145,6 +210,10 @@ def analyze_firmware(firmware_path: Path | str) -> Dict[str, Any]:
         ]
         result["strings"] = sorted(set(meaningful_strings))
 
+        # 4. Infer Peripherals and Hardware Signatures
+        all_symbols = result["symbols"]["functions"] + result["symbols"]["objects"]
+        result["detected_peripherals"] = detect_peripherals(all_symbols, result["strings"])
+
     return result
 
 
@@ -170,6 +239,7 @@ def main() -> int:
     print(f"  Sections:     {len(result['sections'])} sections")
     print(f"  Symbols:      {result['symbols']['function_count']} functions, stripped={result['symbols']['is_stripped']}")
     print(f"  Strings:      {len(result['strings'])} extracted literals")
+    print(f"  Peripherals:  {list(result['detected_peripherals'].keys())}")
     return 0
 
 

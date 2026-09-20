@@ -21,7 +21,7 @@ _TEMPLATE_NAME = "template.html"
 def render_report(state: "AgentState", demo_failure: bool = False) -> str:
     """Render report.html from state and return the HTML string."""
     env = Environment(
-        loader=FileSystemLoader(str(_TEMPLATE_DIR)),
+        loader=FileSystemLoader(str(_TEMPLATE_DIR), encoding="utf-8"),
         autoescape=select_autoescape(["html"]),
     )
     template = env.get_template(_TEMPLATE_NAME)

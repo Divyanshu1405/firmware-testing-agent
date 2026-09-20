@@ -9,6 +9,7 @@
       "value": "Temperature:"
     },
     "within_ms": 3000,
+    "min_interval_ms": 200,
     "oracle_source": "spec"
   },
   {

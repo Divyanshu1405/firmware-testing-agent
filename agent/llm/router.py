@@ -55,6 +55,8 @@ _RPM_MIN_INTERVAL: dict[str, float] = {
     "gemini-2.5-flash": 6.5,
 }
 _last_call_time: dict[str, float] = {}  # model_name → epoch seconds
+_gemini_exhausted: bool = False
+_ollama_unavailable: bool = False
 
 
 def _rpm_wait(model: str) -> None:
@@ -92,7 +94,7 @@ def _cache_key(prompt: str, model: str) -> str:
 
 def is_offline() -> bool:
     """Return True if offline mode is requested via env or module config."""
-    return LLM_OFFLINE or os.getenv("LLM_OFFLINE", "0") == "1"
+    return LLM_OFFLINE
 
 
 def _cache_path(key: str) -> Path:
@@ -150,6 +152,10 @@ class _RateLimitError(Exception):
 )
 def _call_gemini(prompt: str, model: str) -> str:
     """Return raw JSON string from Gemini. Raises _GeminiError or _RateLimitError."""
+    global _gemini_exhausted
+    if _gemini_exhausted:
+        raise _GeminiError("Gemini API quota exhausted for this session")
+
     try:
         from langchain_google_genai import ChatGoogleGenerativeAI
         from langchain_core.messages import HumanMessage
@@ -173,6 +179,9 @@ def _call_gemini(prompt: str, model: str) -> str:
         return response.content  # type: ignore[return-value]
     except Exception as exc:
         msg = str(exc).lower()
+        if "per day" in msg or "daily" in msg or "freetier" in msg or "perprojectpermodel" in msg or "resource_exhausted" in msg:
+            _gemini_exhausted = True
+            raise _GeminiError(f"Gemini API quota exhausted: {exc}") from exc
         if "429" in msg or "quota" in msg or "rate" in msg:
             raise _RateLimitError(str(exc)) from exc
         if "api key" in msg or "invalid" in msg or "401" in msg or "403" in msg:
@@ -182,12 +191,16 @@ def _call_gemini(prompt: str, model: str) -> str:
 
 @retry(
     retry=retry_if_exception_type(_RateLimitError),
-    wait=wait_exponential(multiplier=2, min=4, max=60),
-    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=1, min=1, max=3),
+    stop=stop_after_attempt(1),
     reraise=True,
 )
 def _call_ollama(prompt: str, model: str) -> str:
     """Return raw JSON string from Ollama."""
+    global _ollama_unavailable
+    if _ollama_unavailable:
+        raise RuntimeError(f"Ollama daemon not reachable at {OLLAMA_BASE_URL}")
+
     try:
         from langchain_ollama import ChatOllama
         from langchain_core.messages import HumanMessage
@@ -205,6 +218,9 @@ def _call_ollama(prompt: str, model: str) -> str:
         return response.content  # type: ignore[return-value]
     except Exception as exc:
         msg = str(exc).lower()
+        if "10061" in msg or "connection refused" in msg or "connecterror" in msg or "failed to connect" in msg:
+            _ollama_unavailable = True
+            raise RuntimeError(f"Ollama daemon not reachable at {OLLAMA_BASE_URL}: {exc}") from exc
         if "429" in msg or "rate" in msg:
             raise _RateLimitError(str(exc)) from exc
         raise

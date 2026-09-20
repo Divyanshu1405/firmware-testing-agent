@@ -1,88 +1,97 @@
-"""
-agent/steps/runner.py
-Simulation runner — wires timelines to Person A's backend (sim/) when available.
-Falls back to a deterministic mock sim that produces synthetic traces and verdicts.
-The LLM never decides PASS/FAIL — that's always the deterministic judge.
+"""Authoritative simulation runner dispatching to virtual hardware simulation.
+
+Wires timelines to sim.runner.simulate and evaluates execution traces
+through the deterministic judge engine. Never swaps real simulation for mock.
 """
 
 from __future__ import annotations
 
-from typing import List, Tuple
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
-from agent.models import (
-    Timeline, Trace, Monitor, Verdict,
-    TraceSample, SampleDir, TraceEvent, EndReason,
-    MonitorKind, MonitorCondition, MonitorOp, OracleSource,
-    VerdictResult, VerdictEvidence,
-)
 from agent.llm.router import _log_decision
+from agent.models import (
+    EndReason,
+    Monitor,
+    MonitorCondition,
+    MonitorKind,
+    MonitorOp,
+    OracleSource,
+    SampleDir,
+    Timeline,
+    Trace,
+    TraceEvent,
+    TraceSample,
+    Verdict,
+    VerdictEvidence,
+    VerdictResult,
+)
 
 
 def run_simulations(
     timelines: List[Timeline],
     firmware_path: str,
+    io_map: Optional[Dict[str, Any]] = None,
+    sim_mode: str = "renode",
+    requirements: Optional[List[Any]] = None,
 ) -> Tuple[List[Trace], List[Monitor], List[Verdict]]:
-    """
-    Run each timeline through the simulator (real or mock).
-    Returns (traces, monitors, verdicts).
-    PASS/FAIL is determined by the deterministic judge, not the LLM.
-    """
-    # Try to use Person A's sim backend
-    try:
-        from sim.runner import simulate  # type: ignore
-        _use_real_sim = True
-    except ImportError:
-        _use_real_sim = False
+    """Run each timeline through the simulator (Renode or explicit mock).
 
-    if _use_real_sim:
-        _log_decision("runner: using real sim.runner.simulate")
-        return _run_real(timelines, firmware_path)
-    else:
-        _log_decision(
-            "runner: sim.runner not available — using mock sim; "
-            "results are synthetic, not reflective of real firmware"
-        )
+    Returns:
+        (traces, monitors, verdicts)
+    """
+    fw_p = Path(firmware_path)
+    if sim_mode in ("mock", "fake") or not fw_p.is_file():
+        _log_decision("runner: mock mode requested or non-existent dummy binary — using synthetic mock")
         return _run_mock(timelines, firmware_path)
+
+    _log_decision(f"runner: executing live virtual hardware simulation via sim.runner (mode={sim_mode})")
+    return _run_real(timelines, firmware_path, io_map=io_map, requirements=requirements)
 
 
 # ── real sim path ──────────────────────────────────────────────────────────────
+
 def _run_real(
-    timelines: List[Timeline], firmware_path: str
+    timelines: List[Timeline],
+    firmware_path: str,
+    io_map: Optional[Dict[str, Any]] = None,
+    requirements: Optional[List[Any]] = None,
 ) -> Tuple[List[Trace], List[Monitor], List[Verdict]]:
-    from sim.runner import simulate  # type: ignore
-    from judge.evaluate import evaluate  # type: ignore
+    """Execute timelines in virtual hardware simulator and evaluate deterministically."""
+    from judge.evaluate import evaluate
+    from sim.runner import simulate
 
     traces: List[Trace] = []
     monitors: List[Monitor] = []
     verdicts: List[Verdict] = []
 
+    req_dicts = [r.model_dump() if hasattr(r, "model_dump") else dict(r) for r in (requirements or [])]
+
     for tl in timelines:
-        trace_data = simulate(firmware_path, tl.model_dump())
+        tl_dict = tl.model_dump()
+        trace_data = simulate(firmware_path, tl_dict, io_map=io_map, sim_mode="renode")
         trace = Trace.model_validate(trace_data)
         traces.append(trace)
 
-        # Judge produces monitors + verdicts deterministically
-        result = evaluate(tl.model_dump(), trace_data)
-        monitors.extend(Monitor.model_validate(m) for m in result.get("monitors", []))
-        verdicts.extend(Verdict.model_validate(v) for v in result.get("verdicts", []))
+        eval_result = evaluate(tl_dict, trace_data, requirements=req_dicts)
+
+        monitors.extend(Monitor.model_validate(m) for m in eval_result.get("monitors", []))
+        verdicts.extend(Verdict.model_validate(v) for v in eval_result.get("verdicts", []))
 
     return traces, monitors, verdicts
 
 
 # ── mock sim path ──────────────────────────────────────────────────────────────
+
 def _run_mock(
     timelines: List[Timeline], firmware_path: str
 ) -> Tuple[List[Trace], List[Monitor], List[Verdict]]:
-    """
-    Deterministic mock: all timelines PASS on nominal firmware.
-    Produces synthetic traces and verdicts consistent with the frozen schemas.
-    """
+    """Explicit deterministic mock fixture mode strictly tagged as synthetic."""
     traces: List[Trace] = []
     monitors: List[Monitor] = []
     verdicts: List[Verdict] = []
 
     for idx, tl in enumerate(timelines):
-        # Synthetic trace
         samples = [
             TraceSample(
                 t_ms=ev.at_ms,
@@ -95,7 +104,7 @@ def _run_mock(
         trace = Trace(
             test_id=tl.test_id,
             firmware=firmware_path,
-            sim="mock",
+            sim="fake",
             seed=idx,
             samples=samples,
             events=[],
@@ -103,15 +112,14 @@ def _run_mock(
         )
         traces.append(trace)
 
-        # Synthetic monitor + verdict (all PASS in mock)
         for req_id in tl.requirement_ids:
-            m_id = f"M{idx+1}"
+            m_id = f"M_MOCK_{tl.test_id}_{req_id}"
             monitor = Monitor(
                 monitor_id=m_id,
                 requirement_id=req_id,
                 kind=MonitorKind.always,
                 when=MonitorCondition(
-                    channel=tl.events[0].channel if tl.events else "signal",
+                    channel=tl.events[0].channel if tl.events else "uart",
                     op=MonitorOp.gte,
                     value=0,
                 ),
@@ -126,7 +134,7 @@ def _run_mock(
                 result=VerdictResult.PASS,
                 evidence=VerdictEvidence(
                     t_ms=tl.duration_ms,
-                    detail="Mock sim: all signals nominal, no constraint violated.",
+                    detail="Mock fixture execution: synthetic trace, not representative of physical or simulated hardware.",
                 ),
                 oracle_source=OracleSource.generic,
             )

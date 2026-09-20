@@ -1,5 +1,5 @@
-"""Gemini -> Ollama fallback router placeholder."""
+"""Compatibility export for the authoritative LLM router."""
 
+from agent.llm.router import ask_llm
 
-def ask_llm(prompt: str) -> str:
-    raise NotImplementedError
+__all__ = ["ask_llm"]

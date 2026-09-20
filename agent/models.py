@@ -31,6 +31,7 @@ class TimelineAction(str, Enum):
     spike = "spike"
     glitch = "glitch"
     drift = "drift"
+    error_reading = "error_reading"
     uart_write = "uart_write"
     uart_garbage = "uart_garbage"
 
@@ -116,8 +117,8 @@ class MonitorOp(str, Enum):
 
 class MonitorCondition(BaseModel):
     channel: str
-    op: MonitorOp
-    value: Any
+    op: str
+    value: Any = None
     hold_ms: Optional[int] = None
 
     model_config = {"extra": "allow"}
@@ -133,10 +134,13 @@ class Monitor(BaseModel):
     monitor_id: str
     requirement_id: str
     kind: MonitorKind
-    when: MonitorCondition
+    when: Optional[MonitorCondition] = None
     then: Optional[MonitorCondition] = None
     within_ms: Optional[int] = None
+    min_interval_ms: Optional[int] = None
     oracle_source: OracleSource
+
+    model_config = {"extra": "allow"}
 
 
 # ── Verdict ───────────────────────────────────────────────────────────────────
@@ -147,8 +151,8 @@ class VerdictResult(str, Enum):
 
 
 class VerdictEvidence(BaseModel):
-    t_ms: int = Field(ge=0)
-    detail: str
+    t_ms: Optional[int] = Field(default=0, ge=0)
+    detail: str = ""
 
     model_config = {"extra": "allow"}
 
@@ -160,6 +164,8 @@ class Verdict(BaseModel):
     result: VerdictResult
     evidence: VerdictEvidence
     oracle_source: OracleSource
+
+    model_config = {"extra": "allow"}
 
 
 # ── IO Map ────────────────────────────────────────────────────────────────────
@@ -187,6 +193,8 @@ class AgentState(BaseModel):
     """Shared state object threaded through every LangGraph node."""
     firmware_path: str = ""
     spec_text: str = ""
+    firmware_profile: dict = {}
+    io_map: dict = {}
     requirements: List[Requirement] = []
     test_plan: List[dict] = []
     timelines: List[Timeline] = []

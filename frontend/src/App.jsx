@@ -105,11 +105,6 @@ export default function App() {
     setRunResult(null);
     setPipelineStep(1);
 
-    // Simulated step transitions for smooth UX while backend processes
-    const stepTimer1 = setTimeout(() => setPipelineStep(2), 1200);
-    const stepTimer2 = setTimeout(() => setPipelineStep(3), 2800);
-    const stepTimer3 = setTimeout(() => setPipelineStep(4), 4500);
-
     try {
       const res = await fetch("/api/run", {
         method: "POST",
@@ -121,10 +116,6 @@ export default function App() {
         }),
       });
 
-      clearTimeout(stepTimer1);
-      clearTimeout(stepTimer2);
-      clearTimeout(stepTimer3);
-
       if (!res.ok) {
         const errText = await res.text();
         throw new Error(
@@ -133,13 +124,10 @@ export default function App() {
       }
 
       const data = await res.json();
-      setPipelineStep(5);
+      setPipelineStep(8);
       setRunResult(data);
       setReportTimestamp(Date.now());
     } catch (err) {
-      clearTimeout(stepTimer1);
-      clearTimeout(stepTimer2);
-      clearTimeout(stepTimer3);
       setErrorMsg(err.message || "Pipeline execution encountered an error.");
       setPipelineStep(0);
     } finally {
@@ -157,11 +145,14 @@ export default function App() {
   };
 
   const stages = [
-    { id: 1, name: "Spec Extraction", desc: "NLP Requirements" },
-    { id: 2, name: "Test Planning", desc: "Scenario Synthesis" },
-    { id: 3, name: "Fault Timelines", desc: "Timeline Compilation" },
-    { id: 4, name: "Simulation", desc: "Renode / Trace Capture" },
-    { id: 5, name: "Verdict & Report", desc: "Evaluation & HTML" },
+    { id: 1, name: "1. Triage", desc: "Arch & Machine" },
+    { id: 2, name: "2. Profile", desc: "Peripheral Ingestion" },
+    { id: 3, name: "3. Requirements", desc: "Constraint Synthesis" },
+    { id: 4, name: "4. Test Planning", desc: "Scenario Synthesis" },
+    { id: 5, name: "5. Timelines", desc: "Virtual Events" },
+    { id: 6, name: "6. Renode Sim", desc: "Hardware Sim" },
+    { id: 7, name: "7. Deterministic Judge", desc: "Evidence Verification" },
+    { id: 8, name: "8. Report", desc: "Audit Report" },
   ];
 
   return (
@@ -207,8 +198,8 @@ export default function App() {
               }}
             >
               {backendHealth?.renode_available
-                ? "Renode Installed"
-                : "Renode Mock / Heuristic"}
+                ? "Renode Virtual Hardware Active"
+                : "Simulator Offline (Mock Fixture Only)"}
             </span>
           </div>
         </div>
@@ -311,11 +302,11 @@ export default function App() {
                 />
                 <div style={{ marginLeft: 8 }}>
                   <div style={styles.modeTitle}>
-                    Offline Heuristic Mode (Instant & Local)
+                    Deterministic Mode (Local Rules + Renode Hardware Sim)
                   </div>
                   <div style={styles.modeDesc}>
-                    Uses deterministic rule extraction without requiring
-                    external API keys.
+                    Fast deterministic rule extraction and live Renode virtual
+                    hardware execution without external LLM API keys.
                   </div>
                 </div>
               </label>
@@ -331,10 +322,11 @@ export default function App() {
                 />
                 <div style={{ marginLeft: 8 }}>
                   <div style={styles.modeTitle}>
-                    Live LLM Mode (Gemini / OpenAI)
+                    LLM-Augmented Mode (Gemini/OpenAI + Renode Hardware Sim)
                   </div>
                   <div style={styles.modeDesc}>
-                    Requires active GEMINI_API_KEY in environment.
+                    LLM reasoning for specification NLP and scenario synthesis
+                    combined with live Renode hardware simulation.
                   </div>
                 </div>
               </label>
@@ -362,12 +354,32 @@ export default function App() {
         <div style={styles.colRight}>
           {/* Progress Tracker */}
           <div style={styles.card}>
-            <h2 style={styles.cardTitle}>Pipeline Workflow Progress</h2>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <h2 style={styles.cardTitle}>
+                Pipeline Workflow Progress (8 Stages)
+              </h2>
+              {running && (
+                <span
+                  style={{
+                    fontSize: "0.78rem",
+                    color: "#38bdf8",
+                    fontWeight: 600,
+                  }}
+                >
+                  ⚙ Virtual Hardware Simulation In Progress...
+                </span>
+              )}
+            </div>
             <div style={styles.stageGrid}>
               {stages.map((stage) => {
-                const isCurrent = running && pipelineStep === stage.id;
-                const isCompleted =
-                  pipelineStep > stage.id || (runResult && pipelineStep >= 5);
+                const isCurrent = running;
+                const isCompleted = runResult && pipelineStep >= 8;
                 return (
                   <div
                     key={stage.id}
@@ -736,7 +748,7 @@ const styles = {
   },
   stageGrid: {
     display: "grid",
-    gridTemplateColumns: "repeat(5, 1fr)",
+    gridTemplateColumns: "repeat(4, 1fr)",
     gap: 10,
     marginTop: 8,
   },

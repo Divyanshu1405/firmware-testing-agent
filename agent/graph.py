@@ -1,17 +1,14 @@
-"""
-agent/graph.py
-LangGraph pipeline for the firmware testing agent.
+"""Authoritative LangGraph pipeline for the firmware testing agent.
 
 Nodes (each operates on AgentState):
-  spec_node      → read spec, extract requirements via LLM
-  plan_node      → generate test plan (≤8 tests)
-  timeline_node  → compile timelines from plan
-  run_node       → execute simulations (or mock)
-  explain_node   → produce FAIL hypotheses
-  report_node    → render HTML report
-
-Run with mock data (no LLM, no simulator):
-  python -m agent.graph --mock [--firmware <path>] [--spec <path>]
+  triage_node    -> inspect ELF header, vector table, symbols, and strings
+  profile_node   -> infer hardware platform, peripheral bindings, and I/O map
+  spec_node      -> extract requirements from specification text
+  plan_node      -> generate test plan paired with hardware capabilities
+  timeline_node  -> compile executable timelines validated against I/O map
+  run_node       -> execute virtual hardware simulation and evaluate deterministically
+  explain_node   -> synthesize failure hypotheses
+  report_node    -> render standalone verification HTML report
 """
 
 from __future__ import annotations
@@ -20,18 +17,62 @@ import argparse
 import json
 from pathlib import Path
 
-from langgraph.graph import StateGraph, END
-from pydantic import ValidationError
+from langgraph.graph import END, StateGraph
 
 from agent.models import AgentState
-from agent import steps
 
 
 # ── node implementations ──────────────────────────────────────────────────────
 
+def triage_node(state: AgentState) -> AgentState:
+    """Inspect ELF binary and extract static architecture, symbols, and strings."""
+    from profile.static.triage import analyze_firmware, is_elf_file
+
+    fw_path = Path(state.firmware_path) if state.firmware_path else None
+    if fw_path and fw_path.is_file():
+        if not is_elf_file(fw_path):
+            return state.model_copy(
+                update={"error": f"Invalid firmware format for '{fw_path.name}'. Only valid ELF binaries are supported."}
+            )
+        try:
+            triage_data = analyze_firmware(fw_path)
+            return state.model_copy(update={"firmware_profile": triage_data})
+        except Exception as exc:
+            return state.model_copy(update={"error": f"triage_node: {exc}"})
+    else:
+        # Dummy or placeholder firmware for offline/mock test execution
+        triage_data = {
+            "architecture": "ARM Cortex-M4",
+            "entry_point": 0,
+            "symbols": [],
+            "strings": [],
+            "peripherals": ["UART", "GPIO"],
+        }
+        return state.model_copy(update={"firmware_profile": triage_data})
+
+
+def profile_node(state: AgentState) -> AgentState:
+    """Infer hardware platform bindings, peripheral map, and provenance."""
+    if state.error:
+        return state
+    from profile.infer import infer_profile
+
+    try:
+        fw_profile, io_map = infer_profile(state.firmware_profile, state.firmware_path)
+        return state.model_copy(update={
+            "firmware_profile": fw_profile,
+            "io_map": io_map,
+        })
+    except Exception as exc:
+        return state.model_copy(update={"error": f"profile_node: {exc}"})
+
+
 def spec_node(state: AgentState) -> AgentState:
-    """Extract requirements from spec text via LLM (or load from cache)."""
+    """Extract requirements from spec text via LLM router."""
+    if state.error:
+        return state
     from agent.steps.spec import extract_requirements
+
     try:
         reqs = extract_requirements(state.spec_text or "")
         return state.model_copy(update={"requirements": reqs})
@@ -40,36 +81,53 @@ def spec_node(state: AgentState) -> AgentState:
 
 
 def plan_node(state: AgentState) -> AgentState:
-    """Generate test plan entries from requirements."""
+    """Generate test plan covering requirements and hardware interfaces."""
     if state.error:
         return state
     from agent.steps.plan import generate_plan
+
     try:
-        test_plan = generate_plan(state.requirements)
+        test_plan = generate_plan(state.requirements, io_map=state.io_map)
         return state.model_copy(update={"test_plan": test_plan})
     except Exception as exc:
         return state.model_copy(update={"error": f"plan_node: {exc}"})
 
 
 def timeline_node(state: AgentState) -> AgentState:
-    """Compile/lint timelines (stand-in lint if A's isn't ready)."""
+    """Compile test plan scenarios into executable, linted timelines."""
     if state.error:
         return state
     from agent.steps.timelines import expand_plan_to_timelines
+
     try:
-        timelines = expand_plan_to_timelines(state.test_plan, state.requirements)
+        timelines = expand_plan_to_timelines(
+            state.test_plan, state.requirements, io_map=state.io_map
+        )
         return state.model_copy(update={"timelines": timelines})
     except Exception as exc:
         return state.model_copy(update={"error": f"timeline_node: {exc}"})
 
 
 def run_node(state: AgentState) -> AgentState:
-    """Run simulations (mock if no real sim available) and produce verdicts."""
+    """Execute virtual hardware simulations and evaluate deterministically."""
     if state.error:
         return state
     from agent.steps.runner import run_simulations
+    import inspect
+
     try:
-        traces, monitors, verdicts = run_simulations(state.timelines, state.firmware_path)
+        sig = inspect.signature(run_simulations)
+        kwargs = {}
+        if "io_map" in sig.parameters:
+            kwargs["io_map"] = state.io_map
+        if "requirements" in sig.parameters:
+            kwargs["requirements"] = state.requirements
+
+        traces, monitors, verdicts = run_simulations(
+            state.timelines,
+            state.firmware_path,
+            **kwargs,
+        )
         return state.model_copy(update={
             "traces": traces,
             "monitors": monitors,
@@ -80,10 +138,11 @@ def run_node(state: AgentState) -> AgentState:
 
 
 def explain_node(state: AgentState) -> AgentState:
-    """Produce a hypothesis for each FAIL verdict."""
+    """Generate hypotheses for FAIL verdicts (never alters verdict truth)."""
     if state.error:
         return state
     from agent.steps.explain import explain_failures
+
     try:
         explanations = explain_failures(state.verdicts, state.requirements, state.traces)
         return state.model_copy(update={"explanations": explanations})
@@ -92,10 +151,11 @@ def explain_node(state: AgentState) -> AgentState:
 
 
 def report_node(state: AgentState) -> AgentState:
-    """Render the HTML report from the current state."""
+    """Render the comprehensive verification report."""
     if state.error:
         return state
     from agent.steps.report import render_report
+
     try:
         html = render_report(state)
         return state.model_copy(update={"report_html": html})
@@ -106,9 +166,11 @@ def report_node(state: AgentState) -> AgentState:
 # ── graph assembly ────────────────────────────────────────────────────────────
 
 def build_graph():
-    """Build and compile the LangGraph state machine."""
+    """Build and compile the authoritative LangGraph state machine."""
     sg = StateGraph(AgentState)
 
+    sg.add_node("triage", triage_node)
+    sg.add_node("profile", profile_node)
     sg.add_node("spec", spec_node)
     sg.add_node("plan", plan_node)
     sg.add_node("timeline", timeline_node)
@@ -116,7 +178,9 @@ def build_graph():
     sg.add_node("explain", explain_node)
     sg.add_node("report", report_node)
 
-    sg.set_entry_point("spec")
+    sg.set_entry_point("triage")
+    sg.add_edge("triage", "profile")
+    sg.add_edge("profile", "spec")
     sg.add_edge("spec", "plan")
     sg.add_edge("plan", "timeline")
     sg.add_edge("timeline", "run")
@@ -136,35 +200,20 @@ def _write_report(html: str, out_dir: Path = Path("out")) -> Path:
     return report_path
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Run firmware testing agent pipeline")
-    parser.add_argument("--mock", action="store_true", help="Use mock data (no LLM/sim)")
-    parser.add_argument("--firmware", default="dummy_fw.bin", help="Path to firmware file")
-    parser.add_argument("--spec", default="README.md", help="Path to spec/README")
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Run the firmware testing agent graph.")
+    parser.add_argument("--firmware", default="dummy_fw.bin", help="Path to firmware ELF")
+    parser.add_argument("--spec", default="README.md", help="Path to specification file")
+    parser.add_argument("--out", default="out", help="Output directory")
     args = parser.parse_args()
 
-    if args.mock:
-        from agent.fake_agent import build_mock_state
-        from agent.steps.report import render_report
+    spec_text = Path(args.spec).read_text(encoding="utf-8") if Path(args.spec).exists() else ""
+    initial = AgentState(firmware_path=args.firmware, spec_text=spec_text)
 
-        print("[mock] Building pipeline with mock data...")
-        state = build_mock_state(firmware_path=args.firmware)
-        # Skip LLM-dependent nodes; render directly from mock state
-        html = render_report(state)
-        state = state.model_copy(update={"report_html": html})
-    else:
-        spec_text = Path(args.spec).read_text(encoding="utf-8") if Path(args.spec).exists() else ""
-        initial = AgentState(firmware_path=args.firmware, spec_text=spec_text)
-        graph = build_graph()
-        state = graph.invoke(initial)
+    graph = build_graph()
+    state_dict = graph.invoke(initial)
+    final_state = AgentState.model_validate(state_dict)
 
-    report_path = _write_report(state.report_html)
-    print(f"[done] Report written to {report_path}")
-
-    if state.error:
-        print(f"[error] Pipeline error: {state.error}")
-        raise SystemExit(1)
-
-
-if __name__ == "__main__":
-    main()
+    if final_state.report_html:
+        out_file = _write_report(final_state.report_html, Path(args.out))
+        print(f"Report written to {out_file}")

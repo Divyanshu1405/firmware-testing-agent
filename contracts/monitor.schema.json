@@ -3,8 +3,8 @@
   "$id": "monitor.schema.json",
   "title": "Monitor",
   "type": "object",
-  "required": ["monitor_id", "requirement_id", "kind", "when", "oracle_source"],
-  "additionalProperties": false,
+  "required": ["monitor_id", "requirement_id", "kind", "oracle_source"],
+  "additionalProperties": true,
   "properties": {
     "monitor_id": { "type": "string" },
     "requirement_id": { "type": "string" },
@@ -18,7 +18,7 @@
       "additionalProperties": true,
       "properties": {
         "channel": { "type": "string" },
-        "op": { "type": "string", "enum": ["<", "<=", "==", "!=", ">=", ">"] },
+        "op": { "type": "string" },
         "value": {},
         "hold_ms": { "type": "integer", "minimum": 0 }
       }
@@ -29,11 +29,12 @@
       "additionalProperties": true,
       "properties": {
         "channel": { "type": "string" },
-        "op": { "type": "string", "enum": ["<", "<=", "==", "!=", ">=", ">"] },
+        "op": { "type": "string" },
         "value": {}
       }
     },
     "within_ms": { "type": "integer", "minimum": 0 },
+    "min_interval_ms": { "type": "integer", "minimum": 0 },
     "oracle_source": {
       "type": "string",
       "enum": ["spec", "inferred", "generic"]

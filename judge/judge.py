@@ -318,6 +318,26 @@ def _evaluate_eventually(trace: Dict[str, Any], monitor: Dict[str, Any]) -> Dict
             }
     else:
         ch_samples = _get_channel_samples(samples, channel)
+        min_interval_ms = monitor.get("min_interval_ms")
+        if min_interval_ms is not None:
+            matching = [s for s in ch_samples if matches_condition(s.get("value"), cond)]
+            for i in range(len(matching) - 1):
+                dt = matching[i + 1].get("t_ms", 0) - matching[i].get("t_ms", 0)
+                if dt < min_interval_ms:
+                    return {
+                        "test_id": test_id,
+                        "monitor_id": monitor_id,
+                        "requirement_id": requirement_id,
+                        "result": "FAIL",
+                        "evidence": {
+                            "t_ms": matching[i + 1].get("t_ms", 0),
+                            "interval_ms": dt,
+                            "min_interval_ms": min_interval_ms,
+                            "detail": f"Telemetry flood detected: inter-frame interval of {dt} ms is less than minimum {min_interval_ms} ms",
+                        },
+                        "oracle_source": oracle_source,
+                    }
+
         for s in ch_samples:
             val = s.get("value")
             t_ms = s.get("t_ms", 0)

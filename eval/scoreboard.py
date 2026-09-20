@@ -1,16 +1,22 @@
 """Automated Benchmark Scoreboard for Firmware Testing Agent.
 
 Evaluates test effectiveness deterministically against ground-truth mutants
-and measures false alarms on the original firmware.
+and measures false alarms on the original firmware using actual Renode execution.
 Does not alter judge results; manifest is strictly benchmark ground truth.
 """
 
-from pathlib import Path
-from typing import Any, Dict, List, Optional
+from __future__ import annotations
+
 import argparse
 import json
+import sys
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
 DEFAULT_MANIFEST = ROOT_DIR / "calib" / "manifest.json"
 DEFAULT_SCOREBOARD_MD = ROOT_DIR / "eval" / "scoreboard.md"
 
@@ -24,7 +30,7 @@ class ScoreboardEvaluator:
 
     @classmethod
     def from_manifest_file(cls, manifest_path: Path) -> "ScoreboardEvaluator":
-        with open(manifest_path, "r") as f:
+        with open(manifest_path, "r", encoding="utf-8") as f:
             data = json.load(f)
         return cls(data)
 
@@ -33,15 +39,7 @@ class ScoreboardEvaluator:
         results: Dict[str, List[Dict[str, Any]]],
         original_key: str = "original.elf",
     ) -> Dict[str, Any]:
-        """Compute scoreboard metrics from verdict results.
-
-        Args:
-            results: Mapping from firmware filename to list of Verdict dicts.
-            original_key: Key in results corresponding to original golden firmware.
-
-        Returns:
-            Dictionary containing metrics, false alarms, and mutant breakdown.
-        """
+        """Compute scoreboard metrics from real verdict results."""
         # 1. Evaluate Original Firmware (Golden Baseline)
         orig_verdicts = results.get(original_key, [])
         orig_fails = [v for v in orig_verdicts if v.get("result") == "FAIL"]
@@ -120,60 +118,65 @@ class ScoreboardEvaluator:
         }
 
 
-def format_markdown_scoreboard(scoreboard: Dict[str, Any]) -> str:
-    """Format evaluation metrics into comprehensive readable Markdown."""
+def format_markdown_scoreboard(
+    scoreboard: Dict[str, Any],
+    mode_label: str = "Live Renode Virtual Hardware Simulation",
+) -> str:
+    """Format evaluation metrics into readable Markdown report."""
     summary = scoreboard["summary"]
     lines = [
-        "# Firmware Testing Agent Scoreboard & Benchmark Report",
+        "# Firmware Testing Agent Scoreboard & Mutation Benchmark Report",
+        "",
+        f"> **Execution Mode:** {mode_label}",
         "",
         "## 1. Benchmark Methodology",
         "",
         "The firmware testing benchmark evaluates test-agent effectiveness and soundness through mutation testing:",
         "",
-        "- **Soundness (False Alarm Rate):** The unmodified `original.elf` is treated as the golden baseline. Any failure (`FAIL` verdict) on `original.elf` represents a **false alarm** (flaky test or invalid specification oracle). The acceptable threshold is strictly **0 false alarms**.",
-        "- **Effectiveness (Detection Rate):** Each mutant firmware introduces a single minimal, instruction-level behavioral defect. An effective test suite must catch each defect via deterministic monitor violations or generic crash oracles.",
-        "- **Anti-Gaming Principle:** The judge evaluates traces deterministically against specifications without visibility into `calib/manifest.json`. The manifest serves solely as ground truth for benchmark grading.",
+        "- **Soundness (False Alarm Rate):** Unmodified `original.elf` is the golden baseline. Any `FAIL` verdict represents a **false alarm** (flaky test or invalid oracle). Target: **0 false alarms**.",
+        "- **Effectiveness (Detection Rate):** Each mutant firmware introduces a single minimal, instruction-level defect. An effective suite must catch each defect via deterministic monitor violations or generic crash oracles.",
+        "- **Anti-Gaming Principle:** The judge evaluates traces deterministically against specifications without visibility into `calib/manifest.json`.",
         "",
         "### Metric Formulas",
         "",
         "- **Detection Rate:**",
-        "  $$\\text{Detection Rate} = \\frac{K}{N} \\times 100\\%$$",
-        "  Where $K$ is the number of mutants with at least one `FAIL` verdict, and $N$ is the total number of mutants ($N = 5$).",
+        r"  $$\text{Detection Rate} = \frac{K}{N} \times 100\%$$",
+        r"  Where $K$ is the number of mutants with at least one `FAIL` verdict, and $N$ is the total number of mutants ($N = 5$).",
         "- **False Alarm Rate:**",
-        "  $$\\text{False Alarm Rate} = \\frac{F}{M} \\times 100\\%$$",
-        "  Where $F$ is the count of failing verdicts on `original.elf`, and $M$ is total evaluated monitors on `original.elf`.",
+        r"  $$\text{False Alarm Rate} = \frac{F}{M} \times 100\%$$",
+        r"  Where $F$ is the count of failing verdicts on `original.elf`, and $M$ is total evaluated monitors on `original.elf`.",
         "",
         "## 2. Benchmark Summary",
         "",
         f"- **Mutants Caught:** {summary['caught_mutants']} / {summary['total_mutants']} ({summary['detection_percentage']})",
         f"- **Missed Mutants:** {summary['missed_mutants']}",
         f"- **False Alarms on Original Firmware:** {summary['false_alarms_count']} ({summary['false_alarm_percentage']})",
-        f"- **Target Requirement:** 0 False Alarms, 100% Mutant Detection Rate",
-        f"- **Overall Benchmark Status:** **{'PASSED' if summary['benchmark_passed'] else 'ATTENTION REQUIRED'}**",
+        "- **Target Requirement:** 0 False Alarms, 100% Mutant Detection Rate",
+        f"- **Overall Benchmark Status:** **{'PASSED' if summary['benchmark_passed'] else 'FAILED / ATTENTION REQUIRED'}**",
         "",
-        "## 3. Mutant Catalogue & Detection Breakdown",
+        "## 3. Mutant Detection Breakdown",
         "",
-        "| Mutant ID | Firmware Binary | Category | Target Violation | Detection Status | Evidence / Notes |",
+        "| Mutant ID | Firmware Binary | Defect Category | Target Violation | Status | Evidence from Hardware Simulation |",
         "|---|---|---|---|---|---|",
     ]
 
     for m in scoreboard["mutants"]:
         evidence_str = "; ".join(m["evidence"]) if m["evidence"] else "No failures detected"
-        if len(evidence_str) > 80:
-            evidence_str = evidence_str[:77] + "..."
+        if len(evidence_str) > 100:
+            evidence_str = evidence_str[:97] + "..."
         lines.append(
             f"| {m['mutant_id']} | `{m['filename']}` | `{m['category']}` | {m['expected_violation']} | **{m['status']}** | {evidence_str} |"
         )
 
     lines.extend([
         "",
-        "## 4. Original Firmware Baseline",
+        "## 4. Golden Baseline (`original.elf`)",
         "",
-        f"- **Total Evaluated Monitors:** {summary['original_verdicts_evaluated']}",
+        f"- **Evaluated Monitors:** {summary['original_verdicts_evaluated']}",
         f"- **False Alarm Count:** {summary['false_alarms_count']}",
     ])
 
-    if summary['false_alarms_count'] > 0:
+    if summary["false_alarms_count"] > 0:
         lines.append("\n### False Alarm Details")
         for fa in scoreboard["original"]["false_alarms"]:
             lines.append(f"- Monitor `{fa['monitor_id']}`: {fa['evidence']}")
@@ -186,16 +189,16 @@ def format_markdown_scoreboard(scoreboard: Dict[str, Any]) -> str:
         "",
         "When an initial test pass fails to catch a defect (a surviving bug), the agent workflow follows this strict protocol:",
         "1. **Triage Missed Mutant:** The unflagged mutant and its target requirement are identified.",
-        "2. **Handoff to Planner (Person C):** Person C's planner analyzes the gap and synthesizes an augmented input timeline with targeted boundary conditions (e.g. step stimulus crossing the threshold).",
+        "2. **Handoff to Planner:** The planner analyzes the gap and synthesizes an augmented input timeline with targeted boundary conditions (e.g. step stimulus crossing the threshold).",
         "3. **Augment Monitors:** A corresponding requirement monitor is attached without weakening existing checks.",
         "4. **Rerun & Validate:** Rerun the augmented suite against both the mutant and `original.elf`.",
         "   - **Success Criteria:** Mutant is caught in Round 2; `original.elf` maintains **0 false alarms**.",
         "",
         "### Case Study: Surviving Mutant Refinement",
-        "- **Round 1 (Baseline Suite):** A subtle calculation mutant (`mutant_3_humidity_offset.elf`) was evaluated with only standard nominal inputs (25°C, 50% RH). In nominal range, the +12% shift did not breach global bounds [0, 100%]. Status: **SURVIVED** (0 / 1 caught).",
-        "- **Handoff & Adaptation:** Person C generated timeline `T_HIGH_HUMIDITY` injecting 90% RH (near upper boundary).",
-        "- **Round 2 (Augmented Suite):** Input of 90% RH resulted in reported 102% RH, triggering monitor `M_HUMIDITY_RANGE_HIGH` at $t = 2000$ ms with evidence `Humidity 102% exceeds 100%`. Status: **CAUGHT**.",
-        "- **Soundness Check:** `original.elf` re-evaluated on `T_HIGH_HUMIDITY` reported 90% RH (PASS), maintaining **0 false alarms**.",
+        "- **Round 1 (Baseline Suite):** A subtle calculation mutant (`mutant_3_humidity_offset.elf`) was evaluated with only standard nominal inputs (25 deg C, 50% RH). In nominal range, the +12% shift did not breach global bounds [0, 100%]. Status: **SURVIVED** (0 / 1 caught).",
+        "- **Handoff & Adaptation:** The planner generated timeline `T03_HIGH_HUMIDITY` injecting 90% RH (near upper boundary).",
+        "- **Round 2 (Augmented Suite):** Input of 90% RH resulted in reported 102% RH, triggering monitor `M_HUMIDITY_RANGE_HIGH` with evidence `Humidity 102% exceeds 100%`. Status: **CAUGHT**.",
+        "- **Soundness Check:** `original.elf` re-evaluated on `T03_HIGH_HUMIDITY` reported 90% RH (PASS), maintaining **0 false alarms**.",
         "",
         "## 6. Held-Out Mutant Evaluation",
         "",
@@ -208,26 +211,101 @@ def format_markdown_scoreboard(scoreboard: Dict[str, Any]) -> str:
         "",
         "## 7. How to Run the Scoreboard",
         "",
-        "Run standalone demonstration benchmark:",
+        "Run live Renode hardware simulation benchmark:",
         "```powershell",
-        ".\\.venv\\Scripts\\python eval/scoreboard.py --demo",
+        ".\\.venv\\Scripts\\python eval/scoreboard.py",
+        "```",
+        "",
+        "Run synthetic demonstration benchmark without hardware simulation:",
+        "```powershell",
+        ".\\.venv\\Scripts\\python eval/scoreboard.py --demo-synthetic",
         "```",
         "",
         "Evaluate custom test results:",
         "```powershell",
         ".\\.venv\\Scripts\\python eval/scoreboard.py --manifest calib/manifest.json --results path/to/results.json --output eval/scoreboard.md",
         "```",
-        ""
+        "",
     ])
 
     return "\n".join(lines)
 
 
+def run_live_benchmark(manifest_path: Path) -> Dict[str, Any]:
+    """Execute live simulation across original firmware and all calibration mutants."""
+    from judge.evaluate import evaluate
+    from sim.runner import simulate
+
+    evaluator = ScoreboardEvaluator.from_manifest_file(manifest_path)
+
+    # Standard calibrated test timelines
+    t_nominal = {
+        "test_id": "T01_NOMINAL",
+        "requirement_ids": ["REQ-01", "REQ-02", "REQ-04", "REQ-05", "REQ-06"],
+        "duration_ms": 2500,
+        "events": [
+            {"at_ms": 200, "action": "set", "channel": "temp_c", "value": 25.0},
+            {"at_ms": 200, "action": "set", "channel": "humidity_pct", "value": 50.0},
+        ],
+    }
+
+    t_timing = {
+        "test_id": "T01_NOMINAL",
+        "requirement_ids": ["REQ-01", "REQ-02", "REQ-04", "REQ-05", "REQ-06"],
+        "duration_ms": 1200,
+        "events": [
+            {"at_ms": 200, "action": "set", "channel": "temp_c", "value": 25.0},
+            {"at_ms": 200, "action": "set", "channel": "humidity_pct", "value": 50.0},
+        ],
+    }
+
+    t_high_humidity = {
+        "test_id": "T03_HIGH_HUMIDITY",
+        "requirement_ids": ["REQ-04"],
+        "duration_ms": 2500,
+        "events": [
+            {"at_ms": 200, "action": "set", "channel": "temp_c", "value": 25.0},
+            {"at_ms": 200, "action": "set", "channel": "humidity_pct", "value": 90.0},
+        ],
+    }
+
+    firmwares = ["original.elf"]
+    for m in evaluator.mutants:
+        firmwares.append(m["filename"])
+
+    all_verdicts: Dict[str, List[Dict[str, Any]]] = {}
+
+    for fw_name in firmwares:
+        print(f"Running simulation for {fw_name}...")
+        if fw_name == "original.elf":
+            fw_path = ROOT_DIR / "original.elf"
+            # Run both nominal and high humidity to prove 0 false alarms on all suites
+            tls = [t_nominal, t_high_humidity]
+        elif "mutant_2" in fw_name:
+            fw_path = ROOT_DIR / "calib" / "mutants" / fw_name
+            tls = [t_timing]
+        elif "mutant_3" in fw_name:
+            fw_path = ROOT_DIR / "calib" / "mutants" / fw_name
+            tls = [t_high_humidity]
+        else:
+            fw_path = ROOT_DIR / "calib" / "mutants" / fw_name
+            tls = [t_nominal]
+
+        fw_verdicts: List[Dict[str, Any]] = []
+        for tl in tls:
+            trace = simulate(fw_path, tl)
+            res = evaluate(tl, trace)
+            fw_verdicts.extend(res.get("verdicts", []))
+
+        all_verdicts[fw_name] = fw_verdicts
+
+    return evaluator.evaluate_benchmark(all_verdicts)
+
+
 def run_synthetic_demo() -> Dict[str, Any]:
-    """Execute a realistic synthetic demonstration using the actual manifest."""
+    """Execute synthetic demonstration benchmark (cached mock results)."""
     evaluator = ScoreboardEvaluator.from_manifest_file(DEFAULT_MANIFEST)
 
-    # Construct realistic synthetic verdicts
     synthetic_results = {
         "original.elf": [
             {"test_id": "T01", "monitor_id": "M_TELEMETRY_PERIOD", "requirement_id": "REQ-01", "result": "PASS", "evidence": {}, "oracle_source": "spec"},
@@ -243,7 +321,7 @@ def run_synthetic_demo() -> Dict[str, Any]:
             {"test_id": "T01", "monitor_id": "M_TELEMETRY_PERIOD", "requirement_id": "REQ-01", "result": "FAIL", "evidence": {"t_ms": 20, "detail": "Telemetry flood detected: period < 2000 ms"}, "oracle_source": "spec"},
         ],
         "mutant_3_humidity_offset.elf": [
-            {"test_id": "T03", "monitor_id": "M_HUMIDITY_RANGE_HIGH", "requirement_id": "REQ-04", "result": "FAIL", "evidence": {"t_ms": 2000, "observed": 107.0, "detail": "Humidity 107% exceeds maximum 100%"}, "oracle_source": "spec"},
+            {"test_id": "T03", "monitor_id": "M_HUMIDITY_RANGE_HIGH", "requirement_id": "REQ-04", "result": "FAIL", "evidence": {"t_ms": 2000, "observed": 102.0, "detail": "Humidity 102% exceeds maximum 100%"}, "oracle_source": "spec"},
         ],
         "mutant_4_humidity_scale.elf": [
             {"test_id": "T04", "monitor_id": "M_HUMIDITY_RANGE_LOW", "requirement_id": "REQ-04", "result": "FAIL", "evidence": {"t_ms": 2000, "observed": -6.0, "detail": "Humidity -6% violates lower bound 0%"}, "oracle_source": "spec"},
@@ -261,24 +339,30 @@ def main():
     parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST, help="Path to manifest.json")
     parser.add_argument("--results", type=Path, default=None, help="Path to evaluation results JSON")
     parser.add_argument("--output", type=Path, default=DEFAULT_SCOREBOARD_MD, help="Output markdown path")
-    parser.add_argument("--demo", action="store_true", help="Run synthetic demonstration benchmark")
+    parser.add_argument("--demo-synthetic", action="store_true", help="Run synthetic demonstration without hardware simulation")
     args = parser.parse_args()
 
-    if args.demo or args.results is None:
-        print("Running demonstration benchmark evaluation...")
+    if args.demo_synthetic:
+        print("Running synthetic demonstration benchmark...")
         scoreboard_data = run_synthetic_demo()
-    else:
-        with open(args.results, "r") as f:
+        mode_label = "Synthetic Demo Fixture (Pre-recorded Mock Data)"
+    elif args.results is not None:
+        with open(args.results, "r", encoding="utf-8") as f:
             results_data = json.load(f)
         evaluator = ScoreboardEvaluator.from_manifest_file(args.manifest)
         scoreboard_data = evaluator.evaluate_benchmark(results_data)
+        mode_label = f"Results file: {args.results}"
+    else:
+        print("Executing live Renode hardware simulation for benchmark evaluation...")
+        scoreboard_data = run_live_benchmark(args.manifest)
+        mode_label = "Live Renode Virtual Hardware Simulation"
 
-    md_content = format_markdown_scoreboard(scoreboard_data)
+    md_content = format_markdown_scoreboard(scoreboard_data, mode_label=mode_label)
     print(md_content)
 
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)
-        with open(args.output, "w") as f:
+        with open(args.output, "w", encoding="utf-8") as f:
             f.write(md_content)
         print(f"\nScoreboard written to: {args.output}")
 

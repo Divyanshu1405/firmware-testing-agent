@@ -1,8 +1,5 @@
-from .backend import SimBackend, SimulationResult
+"""Compatibility export for the authoritative Renode backend."""
 
+from sim.backend import RenodeBackend
 
-class RenodeBackend(SimBackend):
-    name = "renode"
-
-    def run(self, timeline: dict) -> SimulationResult:
-        raise NotImplementedError("Implement Renode CLI/socket execution here.")
+__all__ = ["RenodeBackend"]

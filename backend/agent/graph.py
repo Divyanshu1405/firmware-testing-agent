@@ -1,5 +1,5 @@
-"""LangGraph entry point. Add nodes as the pipeline is implemented."""
+"""Compatibility export for the authoritative agent graph."""
 
+from agent.graph import build_graph
 
-def build_graph():
-    raise NotImplementedError("Add the PS3 agent graph in the first implementation phase.")
+__all__ = ["build_graph"]
