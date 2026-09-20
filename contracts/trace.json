@@ -1,0 +1,9 @@
+{
+  "test_id": "T07",
+  "firmware": "original.elf",
+  "sim": "renode",
+  "seed": 0,
+  "samples": [],
+  "events": [],
+  "end_reason": "duration_reached"
+}
