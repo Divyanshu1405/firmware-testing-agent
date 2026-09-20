@@ -31,9 +31,9 @@ def _load_schema() -> dict:
 
 
 EXTRACT_PROMPT_TEMPLATE = """\
-You are analysing a firmware specification document. Extract all testable requirements.
+You are analysing a firmware specification document. Extract EVERY numbered requirement in the document, including vague ones marked ambiguous: true.
 
-For each requirement output a JSON object with EXACTLY these fields:
+Output a JSON object with a single key "requirements" that contains an array of requirement objects. Each object MUST have EXACTLY these fields:
 - "id": string, format "R<N>" (e.g. "R1", "R2")
 - "description": string, one sentence describing the requirement
 - "source": string, the filename (e.g. "README.md")
@@ -42,7 +42,31 @@ For each requirement output a JSON object with EXACTLY these fields:
 - "time_value_ms": integer or null, any time limit in milliseconds
 - "ambiguous": boolean, true if the requirement is not precisely measurable
 
-Return ONLY a JSON array of these objects. No explanations.
+Return ONLY valid JSON. No wrapping text or explanations.
+
+Example Output format:
+{{
+  "requirements": [
+    {{
+      "id": "R1",
+      "description": "The system shall do X when Y",
+      "source": "README.md",
+      "source_line": 5,
+      "threshold": 30.0,
+      "time_value_ms": 1000,
+      "ambiguous": false
+    }},
+    {{
+      "id": "R2",
+      "description": "It should be loud.",
+      "source": "README.md",
+      "source_line": 6,
+      "threshold": null,
+      "time_value_ms": null,
+      "ambiguous": true
+    }}
+  ]
+}}
 
 SPEC TEXT (filename: {filename}):
 ---
@@ -97,15 +121,26 @@ def extract_requirements(spec_text: str, filename: str = "README.md") -> List[Re
 
             # We call LLM directly since the response is an array, not an object
             raw_text = _call_llm_raw(prompt)
+            
+            # Save raw response to see what was cached/returned
+            evidence_path = Path(".loop/evidence/spec_raw_response.txt")
+            evidence_path.parent.mkdir(parents=True, exist_ok=True)
+            evidence_path.write_text(str(raw_text), encoding="utf-8")
+
             data = _extract_json(raw_text)
 
             # data may be a list or {"requirements": [...]}
             if isinstance(data, list):
                 raw_items = data
-            elif isinstance(data, dict) and "requirements" in data:
-                raw_items = data["requirements"]
+            elif isinstance(data, dict):
+                if "requirements" in data:
+                    raw_items = data["requirements"]
+                elif not data:  # empty dict {}
+                    raw_items = []
+                else:
+                    raw_items = [data]
             else:
-                raw_items = [data]
+                raw_items = []
 
             # Validate each item against the frozen schema
             results: List[Requirement] = []
@@ -168,7 +203,31 @@ def _call_llm_raw(prompt: str) -> str:
         raw = _r._call_ollama(prompt, _r.OLLAMA_MODEL)
         model_used = _r.OLLAMA_MODEL
 
+    # Log raw response before any parsing
+    evidence_path = _Path(".loop/evidence/spec_raw_response.txt")
+    evidence_path.parent.mkdir(parents=True, exist_ok=True)
+    evidence_path.write_text(str(raw), encoding="utf-8")
+
     data = _r._extract_json(raw)
     _r._write_cache(cache_key, {"model_used": model_used, "data": data})
     _r._log_provenance(model_used, False, cache_key, "spec", tier=_tier)
     return _json.dumps(data)
+
+
+if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--spec", default="README.md")
+    parser.add_argument("--out", default="out/requirements.json")
+    args = parser.parse_args()
+    
+    _text = Path(args.spec).read_text(encoding="utf-8")
+    _reqs = extract_requirements(_text, filename=args.spec)
+    
+    out_path = Path(args.out)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(out_path, "w", encoding="utf-8") as f:
+        json.dump([r.model_dump() for r in _reqs], f, indent=2)
+    
+    print(f"Extracted {len(_reqs)} requirements to {args.out}")
+

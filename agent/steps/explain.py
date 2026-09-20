@@ -22,7 +22,10 @@ explaining the likely cause. The hypothesis must:
 1. Be explicitly labelled as a hypothesis (not a fact).
 2. Cite requirement {req_id}: "{req_desc}"
 3. Reference the evidence: {evidence_detail} at t={evidence_t_ms} ms.
-4. Suggest what aspect of the firmware code might be responsible.
+4. Consider the trace samples showing the state around this time:
+{trace_samples}
+5. Consider the relevant requirement source code (from {source}:{source_line}).
+6. Suggest what aspect of the firmware code might be responsible.
 
 Return ONLY plain text (no JSON, no markdown formatting).
 """
@@ -48,12 +51,21 @@ def explain_failures(
     for verdict in fail_verdicts:
         req = req_map.get(verdict.requirement_id)
         req_desc = req.description if req else "(requirement not found)"
+        
+        trace = next((t for t in traces if t.test_id == verdict.test_id), None)
+        trace_str = "No trace available."
+        if trace:
+            import json
+            trace_str = json.dumps([s.model_dump() for s in trace.samples], indent=2)
 
         prompt = EXPLAIN_PROMPT_TEMPLATE.format(
             req_id=verdict.requirement_id,
             req_desc=req_desc,
             evidence_detail=verdict.evidence.detail,
             evidence_t_ms=verdict.evidence.t_ms,
+            trace_samples=trace_str,
+            source=req.source if req else "N/A",
+            source_line=req.source_line if req else 0,
         )
 
         explanation = ""

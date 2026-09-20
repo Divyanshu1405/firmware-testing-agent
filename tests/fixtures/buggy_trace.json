@@ -1,0 +1,36 @@
+[
+    {
+        "test_id": "T_DEMO",
+        "firmware": "dummy.bin",
+        "sim": "mock",
+        "seed": 42,
+        "events": [],
+        "end_reason": "duration_reached",
+        "samples": [
+            {
+                "t_ms": 0,
+                "dir": "in",
+                "channel": "ch_TEMP",
+                "value": 25.0
+            },
+            {
+                "t_ms": 100,
+                "dir": "in",
+                "channel": "ch_TEMP",
+                "value": 35.0
+            },
+            {
+                "t_ms": 200,
+                "dir": "out",
+                "channel": "ch_FAN",
+                "value": 0
+            },
+            {
+                "t_ms": 400,
+                "dir": "out",
+                "channel": "ch_FAN",
+                "value": 0
+            }
+        ]
+    }
+]

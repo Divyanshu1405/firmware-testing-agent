@@ -3,137 +3,73 @@ agent/steps/plan.py
 Generate a test plan (≤8 tests) from extracted requirements.
 Each test is associated with one or more requirements and has
 a one-line reason for inclusion.
-Output: list[Timeline] with populated test_id, requirement_ids,
-        duration_ms, and events (as LLM-generated, then validated).
+Output: intermediate out/test_plan.json mapping test_id -> reqs + fault + reason.
 """
 
 from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import List
+from typing import List, Dict, Any
 
-import jsonschema
-from pydantic import BaseModel
-
-from agent.models import Requirement, Timeline, TimelineEvent, TimelineAction
-from agent.llm.router import _extract_json, _log_decision
+from agent.models import Requirement
 import agent.llm.router as _router
+from agent.llm.router import _extract_json, _log_decision
 
-_TIMELINE_SCHEMA = Path(__file__).parent.parent.parent / "contracts" / "timeline.schema.json"
 _MAX_TESTS = 8
-
-# Fault matrix (Person C's stand-in; expanded when Person A defines theirs)
-_FAULT_TYPES = [
-    "nominal",         # clean, no fault
-    "dropout",         # signal dropout
-    "ramp_overshoot",  # ramp beyond threshold
-    "stuck",           # signal stuck at value
-]
+_FAULT_TYPES = ["nominal", "dropout", "ramp_overshoot", "stuck"]
 
 PLAN_PROMPT_TEMPLATE = """\
-You are a firmware test planner. Given the requirements below and a fault type,
-generate a test timeline JSON object.
+You are a firmware test planner. Given the requirements below, generate a test plan that pairs requirements with specific hardware fault types.
 
 Requirements:
 {requirements_json}
 
-Fault type: {fault_type}
+Available Fault types for this phase:
+{fault_types}
 
-Output a single JSON object with these EXACT fields:
-- "test_id": string, e.g. "T01"
-- "requirement_ids": array of requirement id strings that this test covers, e.g. ["R1"]
-- "duration_ms": integer, total test duration in milliseconds
-- "events": array of event objects, each with:
-    - "at_ms": integer (milliseconds from start)
-    - "action": one of: set, ramp, step, dropout, stuck, spike, glitch, drift, uart_write, uart_garbage
-    - "channel": string (e.g. "temp_c", "power")
-    - optional: "value", "to", "over_ms", "for_ms"
-- "reason": string, one sentence explaining why this test is needed (added for traceability, strip before schema validation)
+Instructions:
+Generate a test plan covering the requirements and faults.
+- You MUST generate exactly or at most {max_tests} test scenarios.
+- Each scenario should cover 1-2 requirements and focus on 1 fault type.
+- Batch all entries into a single JSON response.
 
-Return ONLY the JSON object. No explanation outside the JSON.
+Output a JSON object with a single key "test_plan" that maps to an array of objects.
+Each object MUST have exactly these fields:
+- "test_id": string (e.g. "T01", "T02")
+- "requirement_ids": array of string (e.g. ["R1"])
+- "fault_type": string (must be one of the provided available fault types)
+- "reason": string (one sentence explaining why this test matters for these requirements)
+
+Example Output Format:
+{{
+  "test_plan": [
+    {{
+      "test_id": "T01",
+      "requirement_ids": ["R7"],
+      "fault_type": "nominal",
+      "reason": "Baseline check to ensure fan activates perfectly within normal parameters."
+    }},
+    {{
+      "test_id": "T02",
+      "requirement_ids": ["R8"],
+      "fault_type": "dropout",
+      "reason": "Simulates sensor signal dropout to verify emergency shutdown triggers safely."
+    }}
+  ]
+}}
+
+Return ONLY valid JSON.
 """
 
-
-def _load_timeline_schema() -> dict:
-    with open(_TIMELINE_SCHEMA, encoding="utf-8") as f:
-        return json.load(f)
-
-
-def generate_plan(requirements: List[Requirement]) -> List[Timeline]:
-    """
-    Generate up to MAX_TESTS timelines from requirements × fault matrix.
-    LLM calls are batched; total calls ≤ MAX_TESTS (half the run budget).
-    """
-    if not requirements:
-        return []
-
-    schema = _load_timeline_schema()
-    timelines: List[Timeline] = []
-    test_counter = 1
-
-    # Pair requirements with fault types, cap at MAX_TESTS
-    pairs = [
-        (req, fault)
-        for fault in _FAULT_TYPES
-        for req in requirements
-    ][:_MAX_TESTS]
-
-    # Track LLM calls for this step (≤ half budget)
-    half_budget = _router.LLM_CALL_BUDGET // 2
-    calls_this_step = 0
-
-    for req, fault in pairs:
-        if calls_this_step >= half_budget:
-            _log_decision(
-                f"plan: reached half-budget ({half_budget}) at test {test_counter}; "
-                "stopping plan generation to preserve budget for other steps"
-            )
-            break
-
-        test_id = f"T{test_counter:02d}"
-        prompt = PLAN_PROMPT_TEMPLATE.format(
-            requirements_json=json.dumps(
-                [r.model_dump() for r in requirements], indent=2
-            ),
-            fault_type=fault,
-        )
-
-        for attempt in range(1, 3):
-            try:
-                raw = _call_llm_raw_plan(prompt, step_tag=f"plan:{test_id}")
-                data = _extract_json(raw)
-
-                # Set test_id from our counter (override LLM's suggestion)
-                data["test_id"] = test_id
-                # Strip reason before schema validation
-                data.pop("reason", None)
-
-                jsonschema.validate(instance=data, schema=schema)
-                timelines.append(Timeline.model_validate(data))
-                calls_this_step += 1
-                test_counter += 1
-                break
-            except (jsonschema.ValidationError, Exception) as exc:
-                if attempt == 2:
-                    _log_decision(
-                        f"plan: {test_id}/{fault} failed after 2 attempts: {exc}; skipping"
-                    )
-                continue
-
-    return timelines
-
-
 def _call_llm_raw_plan(prompt: str, step_tag: str = "plan") -> str:
-    """Like spec._call_llm_raw but for plan step (tier='fast')."""
+    """Uses tier='fast' for planning."""
     import hashlib, json as _json
 
     _tier = "fast"
     _model = _router.GEMINI_MODEL_FAST
 
-    cache_key = hashlib.sha256(
-        f"{_model}::{prompt}".encode()
-    ).hexdigest()
+    cache_key = hashlib.sha256(f"{_model}::{prompt}".encode()).hexdigest()
 
     cached = _router._read_cache(cache_key)
     if cached is not None:
@@ -142,7 +78,6 @@ def _call_llm_raw_plan(prompt: str, step_tag: str = "plan") -> str:
 
     if _router.LLM_OFFLINE:
         raise RuntimeError(f"LLM_OFFLINE=1 but no cache entry for plan (key {cache_key[:8]})")
-
     if _router._calls_this_run >= _router.LLM_CALL_BUDGET:
         raise RuntimeError("LLM call budget exhausted during plan generation")
 
@@ -161,3 +96,67 @@ def _call_llm_raw_plan(prompt: str, step_tag: str = "plan") -> str:
     _router._write_cache(cache_key, {"model_used": model_used, "data": data})
     _router._log_provenance(model_used, False, cache_key, step_tag, tier=_tier)
     return _json.dumps(data)
+
+def generate_plan(requirements: List[Requirement]) -> List[Dict[str, Any]]:
+    if not requirements:
+        return []
+
+    prompt = PLAN_PROMPT_TEMPLATE.format(
+        requirements_json=json.dumps([r.model_dump() for r in requirements], indent=2),
+        fault_types=", ".join(_FAULT_TYPES),
+        max_tests=_MAX_TESTS
+    )
+
+    for attempt in range(1, 3):
+        try:
+            raw = _call_llm_raw_plan(prompt, step_tag="plan:batch")
+            data = _extract_json(raw)
+            if isinstance(data, dict):
+                items = data.get("test_plan", [])
+            else:
+                items = data
+
+            # Truncate if LLM ignored instructions
+            results = items[:_MAX_TESTS]
+            return results
+        except Exception as exc:
+            if attempt == 2:
+                _log_decision(f"plan: batch failed after 2 attempts: {exc}")
+                raise RuntimeError(f"Plan generation failed: {exc}")
+            continue
+
+    return []
+
+if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--reqs", default="out/requirements.json")
+    parser.add_argument("--out", default="out/test_plan.json")
+    args = parser.parse_args()
+
+    reqs_path = Path(args.reqs)
+    if not reqs_path.exists():
+        print(f"No requirements found at {args.reqs}.")
+        import sys
+        sys.exit(1)
+
+    with open(reqs_path, "r", encoding="utf-8") as f:
+        req_dicts = json.load(f)
+    reqs = [Requirement.model_validate(r) for r in req_dicts]
+
+    plan = generate_plan(reqs)
+    
+    # Log to DECISIONS.md as requested:
+    decision_msg = f"Generated {len(plan)} tests in batch."
+    for p in plan:
+        req_str = ",".join(p.get("requirement_ids", []))
+        decision_msg += f" {p.get('test_id')}:[{req_str}]({p.get('fault_type')}),"
+    _log_decision(decision_msg.rstrip(","))
+
+    out_path = Path(args.out)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(out_path, "w", encoding="utf-8") as f:
+        json.dump(plan, f, indent=2)
+
+    print(f"Generated {len(plan)} test plan entries to {args.out}")
+

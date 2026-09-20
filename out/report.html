@@ -1,231 +1,3835 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Firmware Test Report — dummy_fw.bin</title>
   <style>
-    *, *::before, *::after { box-sizing: border-box; }
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+
     body {
-      margin: 0; padding: 0;
+      margin: 0;
+      padding: 0;
       font-family: 'Segoe UI', system-ui, sans-serif;
-      background: #0f1117; color: #e2e8f0;
+      background: #0f1117;
+      color: #e2e8f0;
       line-height: 1.6;
     }
+
     header {
       background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
       border-bottom: 2px solid #334155;
       padding: 2rem 3rem;
     }
-    header h1 { margin: 0; font-size: 1.6rem; color: #38bdf8; }
-    header p  { margin: 0.25rem 0 0; font-size: 0.85rem; color: #94a3b8; }
-    main { padding: 2rem 3rem; max-width: 1200px; margin: 0 auto; }
 
-    section { margin-bottom: 2.5rem; }
+    header h1 {
+      margin: 0;
+      font-size: 1.6rem;
+      color: #38bdf8;
+    }
+
+    header p {
+      margin: 0.25rem 0 0;
+      font-size: 0.85rem;
+      color: #94a3b8;
+    }
+
+    main {
+      padding: 2rem 3rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    section {
+      margin-bottom: 2.5rem;
+    }
+
     h2 {
-      font-size: 1.1rem; font-weight: 600; color: #7dd3fc;
-      border-bottom: 1px solid #1e293b; padding-bottom: 0.4rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #7dd3fc;
+      border-bottom: 1px solid #1e293b;
+      padding-bottom: 0.4rem;
       margin-bottom: 1rem;
     }
 
     /* verdict summary banner */
     .banner {
-      padding: 1rem 1.5rem; border-radius: 8px;
-      font-size: 1rem; font-weight: 600; margin-bottom: 1.5rem;
+      padding: 1rem 1.5rem;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
     }
-    .banner.pass { background: #052e16; color: #4ade80; border: 1px solid #16a34a; }
-    .banner.fail { background: #450a0a; color: #f87171; border: 1px solid #dc2626; }
+
+    .banner.pass {
+      background: #052e16;
+      color: #4ade80;
+      border: 1px solid #16a34a;
+    }
+
+    .banner.fail {
+      background: #450a0a;
+      color: #f87171;
+      border: 1px solid #dc2626;
+    }
 
     /* tables */
     table {
-      width: 100%; border-collapse: collapse;
+      width: 100%;
+      border-collapse: collapse;
       font-size: 0.85rem;
     }
+
     th {
-      background: #1e293b; color: #94a3b8;
-      padding: 0.55rem 0.75rem; text-align: left;
+      background: #1e293b;
+      color: #94a3b8;
+      padding: 0.55rem 0.75rem;
+      text-align: left;
       border-bottom: 1px solid #334155;
     }
+
     td {
       padding: 0.5rem 0.75rem;
       border-bottom: 1px solid #1e293b;
     }
-    tr:hover td { background: #1a2235; }
+
+    tr:hover td {
+      background: #1a2235;
+    }
+
     .badge {
-      display: inline-block; padding: 0.15rem 0.55rem;
-      border-radius: 9999px; font-size: 0.75rem; font-weight: 700;
+      display: inline-block;
+      padding: 0.15rem 0.55rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 700;
       letter-spacing: 0.04em;
     }
-    .badge-pass { background: #052e16; color: #4ade80; }
-    .badge-fail { background: #450a0a; color: #f87171; }
-    .badge-inc  { background: #1c1917; color: #fbbf24; }
+
+    .badge-pass {
+      background: #052e16;
+      color: #4ade80;
+    }
+
+    .badge-fail {
+      background: #450a0a;
+      color: #f87171;
+    }
+
+    .badge-inc {
+      background: #1c1917;
+      color: #fbbf24;
+    }
 
     /* requirements */
-    .req-list { display: flex; flex-direction: column; gap: 0.6rem; }
-    .req-card {
-      background: #1e293b; border: 1px solid #334155;
-      border-radius: 6px; padding: 0.75rem 1rem;
+    .req-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
     }
-    .req-card .req-id { font-weight: 700; color: #38bdf8; margin-right: 0.5rem; }
-    .req-card .req-meta { font-size: 0.75rem; color: #64748b; margin-top: 0.3rem; }
+
+    .req-card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      padding: 0.75rem 1rem;
+    }
+
+    .req-card .req-id {
+      font-weight: 700;
+      color: #38bdf8;
+      margin-right: 0.5rem;
+    }
+
+    .req-card .req-meta {
+      font-size: 0.75rem;
+      color: #64748b;
+      margin-top: 0.3rem;
+    }
 
     /* explanations */
     .explain-block {
-      background: #1c1917; border-left: 3px solid #f59e0b;
-      padding: 0.75rem 1rem; border-radius: 0 6px 6px 0;
-      margin-bottom: 0.75rem; font-size: 0.85rem;
+      background: #1c1917;
+      border-left: 3px solid #f59e0b;
+      padding: 0.75rem 1rem;
+      border-radius: 0 6px 6px 0;
+      margin-bottom: 0.75rem;
+      font-size: 0.85rem;
     }
+
     .explain-block .test-label {
-      font-weight: 700; color: #fbbf24; margin-bottom: 0.3rem;
+      font-weight: 700;
+      color: #fbbf24;
+      margin-bottom: 0.3rem;
     }
 
     /* provenance footer */
     footer {
-      background: #0f1117; border-top: 1px solid #1e293b;
-      padding: 1.5rem 3rem; font-size: 0.78rem; color: #64748b;
+      background: #0f1117;
+      border-top: 1px solid #1e293b;
+      padding: 1.5rem 3rem;
+      font-size: 0.78rem;
+      color: #64748b;
     }
-    footer h3 { color: #94a3b8; margin: 0 0 0.5rem; font-size: 0.85rem; }
-    .prov-table td, .prov-table th {
+
+    footer h3 {
+      color: #94a3b8;
+      margin: 0 0 0.5rem;
+      font-size: 0.85rem;
+    }
+
+    .prov-table td,
+    .prov-table th {
       padding: 0.35rem 0.6rem;
     }
-    .tag-cached  { color: #4ade80; }
-    .tag-network { color: #60a5fa; }
+
+    .tag-cached {
+      color: #4ade80;
+    }
+
+    .tag-network {
+      color: #60a5fa;
+    }
 
     /* no-data notice */
-    .empty { color: #475569; font-style: italic; font-size: 0.85rem; }
+    .empty {
+      color: #475569;
+      font-style: italic;
+      font-size: 0.85rem;
+    }
   </style>
 </head>
+
 <body>
 
-<header>
-  <h1>Firmware Test Report</h1>
-  <p>Firmware: <code>dummy_fw.bin</code></p>
-</header>
+  <header>
+    <h1>Firmware Test Report</h1>
+    <p>Firmware: <code>dummy_fw.bin</code></p>
+  </header>
 
-<main>
+  <main>
+
+    
+    
+    <div class="banner" style="background:#450a0a; color:#f87171; border: 1px solid #dc2626;">
+      ⚠ WARNING: SIMULATED BACKEND
+    </div>
+    
+
+    
+    
+    <div class="banner pass" style="margin-top:1rem;">✓ All tests PASSED</div>
+    
+
+    
+    <section>
+      <h2>Tests Summary (8)</h2>
+      
+      <table>
+        <thead>
+          <tr>
+            <th>Test ID</th>
+            <th>Requirements</th>
+            <th>Reason</th>
+            <th>Fault</th>
+            <th>Verdict</th>
+          </tr>
+        </thead>
+        <tbody>
+          
+          <tr>
+            <td>T01</td>
+            <td>R7</td>
+            <td>Baseline check to ensure fan activates perfectly within normal parameters.</td>
+            <td>nominal</td>
+            <td>
+              
+              <span class="badge badge-pass">PASS</span>
+              
+            </td>
+          </tr>
+          
+          <tr>
+            <td>T02</td>
+            <td>R8</td>
+            <td>Simulates sensor signal dropout to verify emergency shutdown triggers safely.</td>
+            <td>dropout</td>
+            <td>
+              
+              <span class="badge badge-pass">PASS</span>
+              
+            </td>
+          </tr>
+          
+          <tr>
+            <td>T03</td>
+            <td>R10</td>
+            <td>Tests the fan deactivation response when temperature drops rapidly below 25.0°C.</td>
+            <td>ramp_overshoot</td>
+            <td>
+              
+              <span class="badge badge-pass">PASS</span>
+              
+            </td>
+          </tr>
+          
+          <tr>
+            <td>T04</td>
+            <td>R7, R10</td>
+            <td>Verifies the system&#39;s response to a stuck fan that does not deactivate as expected.</td>
+            <td>stuck</td>
+            <td>
+              
+              <span class="badge badge-pass">PASS</span>
+              
+            </td>
+          </tr>
+          
+          <tr>
+            <td>T05</td>
+            <td>R8</td>
+            <td>Baseline check for emergency shutdown at 45.0°C threshold without fault conditions.</td>
+            <td>nominal</td>
+            <td>
+              
+              <span class="badge badge-pass">PASS</span>
+              
+            </td>
+          </tr>
+          
+          <tr>
+            <td>T06</td>
+            <td>R11</td>
+            <td>Simulates a sensor dropout to ensure the system logs a warning for temperature discrepancies.</td>
+            <td>dropout</td>
+            <td>
+              
+              <span class="badge badge-pass">PASS</span>
+              
+            </td>
+          </tr>
+          
+          <tr>
+            <td>T07</td>
+            <td>R9</td>
+            <td>Evaluates fan speed appropriateness under normal operating conditions.</td>
+            <td>nominal</td>
+            <td>
+              
+              <span class="badge badge-pass">PASS</span>
+              
+            </td>
+          </tr>
+          
+          <tr>
+            <td>T08</td>
+            <td>R11</td>
+            <td>Tests the system&#39;s response to a rapid temperature change causing sensor readings to differ significantly.</td>
+            <td>ramp_overshoot</td>
+            <td>
+              
+              <span class="badge badge-pass">PASS</span>
+              
+            </td>
+          </tr>
+          
+        </tbody>
+      </table>
+      
+    </section>
+
+    
+    <section>
+      <h2>Requirement Coverage</h2>
+      
+      <table>
+        <thead>
+          <tr>
+            <th>Requirement</th>
+            <th>Tests</th>
+            <th>Flags</th>
+          </tr>
+        </thead>
+        <tbody>
+          
+          <tr>
+            <td><strong>R7</strong></td>
+            <td>T01, T04</td>
+            <td>
+              
+              
+            </td>
+          </tr>
+          
+          <tr>
+            <td><strong>R8</strong></td>
+            <td>T02, T05</td>
+            <td>
+              
+              
+            </td>
+          </tr>
+          
+          <tr>
+            <td><strong>R9</strong></td>
+            <td>T07</td>
+            <td>
+              
+              
+            </td>
+          </tr>
+          
+          <tr>
+            <td><strong>R10</strong></td>
+            <td>T03, T04</td>
+            <td>
+              
+              
+            </td>
+          </tr>
+          
+          <tr>
+            <td><strong>R11</strong></td>
+            <td>T06, T08</td>
+            <td>
+              
+              
+            </td>
+          </tr>
+          
+        </tbody>
+      </table>
+      
+    </section>
+
+    
+    
+
+  </main>
 
   
-  
+  <footer>
+    <h3>LLM Provenance</h3>
     
-      <div class="banner pass">✓ All tests PASSED</div>
-    
-  
-
-  
-  <section>
-    <h2>Requirements (2)</h2>
-    
-      <div class="req-list">
-        
-        <div class="req-card">
-          <span class="req-id">R1</span>Fan must activate within 1000 ms when temperature exceeds 30°C for ≥2 s.
-          <div class="req-meta">
-            Source: README.md line 22
-             · threshold: 30.0
-             · time limit: 1000 ms
-            
-          </div>
-        </div>
-        
-        <div class="req-card">
-          <span class="req-id">R2</span>UART must echo &#39;READY&#39; within 500 ms of power-on.
-          <div class="req-meta">
-            Source: README.md line 26
-            
-             · time limit: 500 ms
-            
-          </div>
-        </div>
-        
-      </div>
-    
-  </section>
-
-  
-  <section>
-    <h2>Verdicts (2)</h2>
-    
-    <table>
+    <table class="prov-table">
       <thead>
         <tr>
-          <th>Test ID</th><th>Requirement</th><th>Monitor</th>
-          <th>Result</th><th>Evidence</th><th>Oracle</th>
+          <th>Timestamp</th>
+          <th>Step</th>
+          <th>Model</th>
+          <th>Source</th>
+          <th>Hash</th>
         </tr>
       </thead>
       <tbody>
         
         <tr>
-          <td>T01</td>
-          <td>R1</td>
-          <td>M1</td>
+          <td>2026-09-20T10:47:31Z</td>
+          <td>spec</td>
+          <td>qwen2.5:7b-instruct</td>
           <td>
             
-              <span class="badge badge-pass">PASS</span>
+            <span class="tag-network">network</span>
             
           </td>
-          <td>gpio.PA5 went HIGH at 6000 ms, within 1000 ms of threshold. <span style="color:#64748b">(t=6000 ms)</span></td>
-          <td>spec</td>
+          <td style="font-family:monospace">3d5ab0a0c9…</td>
         </tr>
         
         <tr>
-          <td>T02</td>
-          <td>R2</td>
-          <td>M2</td>
+          <td>2026-09-20T10:47:31Z</td>
+          <td>spec</td>
+          <td>qwen2.5:7b-instruct</td>
           <td>
             
-              <span class="badge badge-pass">PASS</span>
+            <span class="tag-cached">cache</span>
             
           </td>
-          <td>UART echoed READY at 100 ms, within 500 ms. <span style="color:#64748b">(t=100 ms)</span></td>
+          <td style="font-family:monospace">3d5ab0a0c9…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T10:50:46Z</td>
           <td>spec</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">3d5ab0a0c9…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T10:50:46Z</td>
+          <td>spec</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">3d5ab0a0c9…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T10:52:29Z</td>
+          <td>spec</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">3d5ab0a0c9…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T10:52:29Z</td>
+          <td>spec</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">3d5ab0a0c9…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T10:53:11Z</td>
+          <td>spec</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">3d5ab0a0c9…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T10:53:11Z</td>
+          <td>spec</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">3d5ab0a0c9…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T10:58:04Z</td>
+          <td>spec</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-network">network</span>
+            
+          </td>
+          <td style="font-family:monospace">3d5ab0a0c9…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T10:58:04Z</td>
+          <td>spec</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">3d5ab0a0c9…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T10:59:58Z</td>
+          <td>spec</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">3d5ab0a0c9…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T11:09:48Z</td>
+          <td>spec</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-network">network</span>
+            
+          </td>
+          <td style="font-family:monospace">258cd43250…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T11:17:33Z</td>
+          <td>spec</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-network">network</span>
+            
+          </td>
+          <td style="font-family:monospace">3bcfe615c0…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T11:19:20Z</td>
+          <td>spec</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-network">network</span>
+            
+          </td>
+          <td style="font-family:monospace">c4e82e31de…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T11:23:15Z</td>
+          <td>spec</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-network">network</span>
+            
+          </td>
+          <td style="font-family:monospace">824d32acff…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T11:33:41Z</td>
+          <td>plan:batch</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-network">network</span>
+            
+          </td>
+          <td style="font-family:monospace">333664a1ff…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T11:36:43Z</td>
+          <td>timeline:T01</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-network">network</span>
+            
+          </td>
+          <td style="font-family:monospace">817d6cc80c…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T11:37:57Z</td>
+          <td>timeline:T02</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-network">network</span>
+            
+          </td>
+          <td style="font-family:monospace">4f2c92a6af…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T11:39:14Z</td>
+          <td>timeline:T03</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-network">network</span>
+            
+          </td>
+          <td style="font-family:monospace">a0058b9fc2…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T11:40:36Z</td>
+          <td>timeline:T04</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-network">network</span>
+            
+          </td>
+          <td style="font-family:monospace">7a131136ae…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T11:41:51Z</td>
+          <td>timeline:T05</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-network">network</span>
+            
+          </td>
+          <td style="font-family:monospace">bb69827942…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T11:42:58Z</td>
+          <td>timeline:T06</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-network">network</span>
+            
+          </td>
+          <td style="font-family:monospace">acfe3bd778…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T11:43:59Z</td>
+          <td>timeline:T07</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-network">network</span>
+            
+          </td>
+          <td style="font-family:monospace">811a0c4fff…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T11:45:07Z</td>
+          <td>timeline:T08</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-network">network</span>
+            
+          </td>
+          <td style="font-family:monospace">b46bf8ce55…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T11:45:46Z</td>
+          <td>timeline:T08</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-network">network</span>
+            
+          </td>
+          <td style="font-family:monospace">eae86c3ce5…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T11:46:25Z</td>
+          <td>timeline:T08</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-network">network</span>
+            
+          </td>
+          <td style="font-family:monospace">7983f8f13e…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T11:56:19Z</td>
+          <td>timeline:T01</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">817d6cc80c…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T11:56:19Z</td>
+          <td>timeline:T02</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">4f2c92a6af…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T11:56:19Z</td>
+          <td>timeline:T03</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">a0058b9fc2…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T11:56:19Z</td>
+          <td>timeline:T04</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">7a131136ae…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T11:56:19Z</td>
+          <td>timeline:T05</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">bb69827942…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T11:56:19Z</td>
+          <td>timeline:T06</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">acfe3bd778…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T11:56:19Z</td>
+          <td>timeline:T07</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">811a0c4fff…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T11:56:19Z</td>
+          <td>timeline:T08</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">b46bf8ce55…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T11:56:19Z</td>
+          <td>timeline:T08</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">eae86c3ce5…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T11:56:19Z</td>
+          <td>timeline:T08</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">7983f8f13e…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T11:57:59Z</td>
+          <td>timeline:T01</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">817d6cc80c…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T11:57:59Z</td>
+          <td>timeline:T02</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">4f2c92a6af…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T11:57:59Z</td>
+          <td>timeline:T03</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">a0058b9fc2…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T11:57:59Z</td>
+          <td>timeline:T04</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">7a131136ae…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T11:57:59Z</td>
+          <td>timeline:T05</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">bb69827942…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T11:57:59Z</td>
+          <td>timeline:T06</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">acfe3bd778…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T11:57:59Z</td>
+          <td>timeline:T07</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">811a0c4fff…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T11:57:59Z</td>
+          <td>timeline:T08</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">b46bf8ce55…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T11:57:59Z</td>
+          <td>timeline:T08</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">eae86c3ce5…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T11:57:59Z</td>
+          <td>timeline:T08</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">7983f8f13e…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:11:15Z</td>
+          <td>spec</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-network">network</span>
+            
+          </td>
+          <td style="font-family:monospace">a235b1a18f…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:14:47Z</td>
+          <td>plan:batch</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-network">network</span>
+            
+          </td>
+          <td style="font-family:monospace">05e8c7db5a…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:17:25Z</td>
+          <td>spec</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">a235b1a18f…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:17:25Z</td>
+          <td>plan:batch</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">05e8c7db5a…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:19:37Z</td>
+          <td>timeline:T01</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-network">network</span>
+            
+          </td>
+          <td style="font-family:monospace">c4c718eb73…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:21:08Z</td>
+          <td>timeline:T02</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-network">network</span>
+            
+          </td>
+          <td style="font-family:monospace">0ffd9a75a7…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:22:33Z</td>
+          <td>timeline:T03</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-network">network</span>
+            
+          </td>
+          <td style="font-family:monospace">a98e0892da…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:24:09Z</td>
+          <td>timeline:T04</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-network">network</span>
+            
+          </td>
+          <td style="font-family:monospace">d74249ec16…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:25:47Z</td>
+          <td>timeline:T05</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-network">network</span>
+            
+          </td>
+          <td style="font-family:monospace">94e85219a8…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:27:02Z</td>
+          <td>timeline:T06</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-network">network</span>
+            
+          </td>
+          <td style="font-family:monospace">0e24914175…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:28:25Z</td>
+          <td>timeline:T07</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-network">network</span>
+            
+          </td>
+          <td style="font-family:monospace">93d8156a8c…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:29:41Z</td>
+          <td>timeline:T08</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-network">network</span>
+            
+          </td>
+          <td style="font-family:monospace">c048f093b8…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:32:51Z</td>
+          <td>spec</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">a235b1a18f…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:32:51Z</td>
+          <td>plan:batch</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">05e8c7db5a…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:32:51Z</td>
+          <td>timeline:T01</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">c4c718eb73…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:32:51Z</td>
+          <td>timeline:T02</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">0ffd9a75a7…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:32:51Z</td>
+          <td>timeline:T03</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">a98e0892da…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:32:51Z</td>
+          <td>timeline:T04</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">d74249ec16…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:32:51Z</td>
+          <td>timeline:T05</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">94e85219a8…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:32:51Z</td>
+          <td>timeline:T06</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">0e24914175…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:32:51Z</td>
+          <td>timeline:T07</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">93d8156a8c…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:32:51Z</td>
+          <td>timeline:T08</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">c048f093b8…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:33:13Z</td>
+          <td>spec</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">a235b1a18f…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:33:13Z</td>
+          <td>plan:batch</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">05e8c7db5a…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:33:13Z</td>
+          <td>timeline:T01</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">c4c718eb73…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:33:13Z</td>
+          <td>timeline:T02</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">0ffd9a75a7…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:33:13Z</td>
+          <td>timeline:T03</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">a98e0892da…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:33:13Z</td>
+          <td>timeline:T04</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">d74249ec16…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:33:13Z</td>
+          <td>timeline:T05</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">94e85219a8…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:33:13Z</td>
+          <td>timeline:T06</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">0e24914175…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:33:13Z</td>
+          <td>timeline:T07</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">93d8156a8c…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:33:13Z</td>
+          <td>timeline:T08</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">c048f093b8…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:36:18Z</td>
+          <td>spec</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">a235b1a18f…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:36:18Z</td>
+          <td>plan:batch</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">05e8c7db5a…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:36:18Z</td>
+          <td>timeline:T01</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">c4c718eb73…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:36:18Z</td>
+          <td>timeline:T02</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">0ffd9a75a7…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:36:18Z</td>
+          <td>timeline:T03</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">a98e0892da…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:36:18Z</td>
+          <td>timeline:T04</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">d74249ec16…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:36:18Z</td>
+          <td>timeline:T05</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">94e85219a8…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:36:18Z</td>
+          <td>timeline:T06</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">0e24914175…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:36:18Z</td>
+          <td>timeline:T07</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">93d8156a8c…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:36:18Z</td>
+          <td>timeline:T08</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">c048f093b8…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:37:39Z</td>
+          <td>spec</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">a235b1a18f…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:37:39Z</td>
+          <td>plan:batch</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">05e8c7db5a…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:37:39Z</td>
+          <td>timeline:T01</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">c4c718eb73…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:37:39Z</td>
+          <td>timeline:T02</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">0ffd9a75a7…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:37:39Z</td>
+          <td>timeline:T03</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">a98e0892da…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:37:39Z</td>
+          <td>timeline:T04</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">d74249ec16…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:37:39Z</td>
+          <td>timeline:T05</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">94e85219a8…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:37:39Z</td>
+          <td>timeline:T06</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">0e24914175…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:37:39Z</td>
+          <td>timeline:T07</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">93d8156a8c…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:37:39Z</td>
+          <td>timeline:T08</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">c048f093b8…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:43:47Z</td>
+          <td>spec</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">a235b1a18f…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:43:47Z</td>
+          <td>plan:batch</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">05e8c7db5a…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:43:47Z</td>
+          <td>timeline:T01</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">c4c718eb73…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:43:47Z</td>
+          <td>timeline:T02</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">0ffd9a75a7…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:43:47Z</td>
+          <td>timeline:T03</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">a98e0892da…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:43:47Z</td>
+          <td>timeline:T04</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">d74249ec16…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:43:47Z</td>
+          <td>timeline:T05</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">94e85219a8…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:43:47Z</td>
+          <td>timeline:T06</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">0e24914175…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:43:47Z</td>
+          <td>timeline:T07</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">93d8156a8c…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:43:47Z</td>
+          <td>timeline:T08</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">c048f093b8…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:45:27Z</td>
+          <td>spec</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">a235b1a18f…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:45:27Z</td>
+          <td>plan:batch</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">05e8c7db5a…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:45:27Z</td>
+          <td>timeline:T01</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">c4c718eb73…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:45:27Z</td>
+          <td>timeline:T02</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">0ffd9a75a7…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:45:27Z</td>
+          <td>timeline:T03</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">a98e0892da…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:45:27Z</td>
+          <td>timeline:T04</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">d74249ec16…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:45:27Z</td>
+          <td>timeline:T05</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">94e85219a8…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:45:27Z</td>
+          <td>timeline:T06</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">0e24914175…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:45:27Z</td>
+          <td>timeline:T07</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">93d8156a8c…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:45:27Z</td>
+          <td>timeline:T08</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">c048f093b8…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:45:59Z</td>
+          <td>spec</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">a235b1a18f…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:45:59Z</td>
+          <td>plan:batch</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">05e8c7db5a…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:45:59Z</td>
+          <td>timeline:T01</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">c4c718eb73…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:45:59Z</td>
+          <td>timeline:T02</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">0ffd9a75a7…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:45:59Z</td>
+          <td>timeline:T03</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">a98e0892da…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:45:59Z</td>
+          <td>timeline:T04</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">d74249ec16…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:45:59Z</td>
+          <td>timeline:T05</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">94e85219a8…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:45:59Z</td>
+          <td>timeline:T06</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">0e24914175…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:45:59Z</td>
+          <td>timeline:T07</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">93d8156a8c…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:45:59Z</td>
+          <td>timeline:T08</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">c048f093b8…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:48:23Z</td>
+          <td>spec</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">a235b1a18f…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:48:23Z</td>
+          <td>plan:batch</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">05e8c7db5a…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:48:23Z</td>
+          <td>timeline:T01</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">c4c718eb73…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:48:23Z</td>
+          <td>timeline:T02</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">0ffd9a75a7…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:48:23Z</td>
+          <td>timeline:T03</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">a98e0892da…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:48:23Z</td>
+          <td>timeline:T04</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">d74249ec16…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:48:23Z</td>
+          <td>timeline:T05</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">94e85219a8…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:48:23Z</td>
+          <td>timeline:T06</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">0e24914175…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:48:23Z</td>
+          <td>timeline:T07</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">93d8156a8c…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:48:23Z</td>
+          <td>timeline:T08</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">c048f093b8…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:51:21Z</td>
+          <td>spec</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-network">network</span>
+            
+          </td>
+          <td style="font-family:monospace">a235b1a18f…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T12:54:40Z</td>
+          <td>plan:batch</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-network">network</span>
+            
+          </td>
+          <td style="font-family:monospace">05e8c7db5a…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:01:06Z</td>
+          <td>spec</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">a235b1a18f…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:01:06Z</td>
+          <td>plan:batch</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">05e8c7db5a…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:01:06Z</td>
+          <td>timeline:T01</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">c4c718eb73…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:01:06Z</td>
+          <td>timeline:T02</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">0ffd9a75a7…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:01:06Z</td>
+          <td>timeline:T03</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">a98e0892da…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:01:06Z</td>
+          <td>timeline:T04</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">d74249ec16…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:01:06Z</td>
+          <td>timeline:T05</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">94e85219a8…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:01:06Z</td>
+          <td>timeline:T06</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">0e24914175…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:01:06Z</td>
+          <td>timeline:T07</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">93d8156a8c…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:01:06Z</td>
+          <td>timeline:T08</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">c048f093b8…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:01:08Z</td>
+          <td>spec</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">a235b1a18f…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:01:08Z</td>
+          <td>plan:batch</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">05e8c7db5a…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:01:08Z</td>
+          <td>timeline:T01</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">c4c718eb73…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:01:08Z</td>
+          <td>timeline:T02</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">0ffd9a75a7…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:01:08Z</td>
+          <td>timeline:T03</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">a98e0892da…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:01:08Z</td>
+          <td>timeline:T04</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">d74249ec16…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:01:08Z</td>
+          <td>timeline:T05</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">94e85219a8…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:01:08Z</td>
+          <td>timeline:T06</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">0e24914175…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:01:08Z</td>
+          <td>timeline:T07</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">93d8156a8c…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:01:08Z</td>
+          <td>timeline:T08</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">c048f093b8…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:01:08Z</td>
+          <td>timeline:T_SMALL</td>
+          <td>gemini-2.5-flash</td>
+          <td>
+            
+            <span class="tag-network">network</span>
+            
+          </td>
+          <td style="font-family:monospace">113a468397…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:01:08Z</td>
+          <td>timeline:T_OVERSIZED</td>
+          <td>gemini-2.5-flash</td>
+          <td>
+            
+            <span class="tag-network">network</span>
+            
+          </td>
+          <td style="font-family:monospace">c2102636c3…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:01:08Z</td>
+          <td>timeline:T_OVERSIZED</td>
+          <td>gemini-2.5-flash</td>
+          <td>
+            
+            <span class="tag-network">network</span>
+            
+          </td>
+          <td style="font-family:monospace">4d48c68b97…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:19:37Z</td>
+          <td>spec</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">a235b1a18f…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:19:37Z</td>
+          <td>plan:batch</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">05e8c7db5a…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:19:37Z</td>
+          <td>timeline:T01</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">c4c718eb73…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:19:37Z</td>
+          <td>timeline:T02</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">0ffd9a75a7…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:19:37Z</td>
+          <td>timeline:T03</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">a98e0892da…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:19:37Z</td>
+          <td>timeline:T04</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">d74249ec16…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:19:37Z</td>
+          <td>timeline:T05</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">94e85219a8…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:19:37Z</td>
+          <td>timeline:T06</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">0e24914175…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:19:37Z</td>
+          <td>timeline:T07</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">93d8156a8c…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:19:37Z</td>
+          <td>timeline:T08</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">c048f093b8…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:21:27Z</td>
+          <td>spec</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">a235b1a18f…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:21:27Z</td>
+          <td>plan:batch</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">05e8c7db5a…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:21:27Z</td>
+          <td>timeline:T01</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">c4c718eb73…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:21:27Z</td>
+          <td>timeline:T02</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">0ffd9a75a7…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:21:27Z</td>
+          <td>timeline:T03</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">a98e0892da…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:21:27Z</td>
+          <td>timeline:T04</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">d74249ec16…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:21:27Z</td>
+          <td>timeline:T05</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">94e85219a8…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:21:27Z</td>
+          <td>timeline:T06</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">0e24914175…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:21:27Z</td>
+          <td>timeline:T07</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">93d8156a8c…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:21:27Z</td>
+          <td>timeline:T08</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">c048f093b8…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:21:39Z</td>
+          <td>spec</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">a235b1a18f…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:21:39Z</td>
+          <td>plan:batch</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">05e8c7db5a…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:21:39Z</td>
+          <td>timeline:T01</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">c4c718eb73…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:21:39Z</td>
+          <td>timeline:T02</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">0ffd9a75a7…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:21:39Z</td>
+          <td>timeline:T03</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">a98e0892da…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:21:39Z</td>
+          <td>timeline:T04</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">d74249ec16…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:21:39Z</td>
+          <td>timeline:T05</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">94e85219a8…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:21:39Z</td>
+          <td>timeline:T06</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">0e24914175…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:21:39Z</td>
+          <td>timeline:T07</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">93d8156a8c…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:21:39Z</td>
+          <td>timeline:T08</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">c048f093b8…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:22:53Z</td>
+          <td>spec</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">a235b1a18f…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:22:53Z</td>
+          <td>plan:batch</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">05e8c7db5a…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:22:53Z</td>
+          <td>timeline:T01</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">c4c718eb73…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:22:53Z</td>
+          <td>timeline:T02</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">0ffd9a75a7…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:22:53Z</td>
+          <td>timeline:T03</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">a98e0892da…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:22:53Z</td>
+          <td>timeline:T04</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">d74249ec16…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:22:53Z</td>
+          <td>timeline:T05</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">94e85219a8…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:22:53Z</td>
+          <td>timeline:T06</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">0e24914175…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:22:53Z</td>
+          <td>timeline:T07</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">93d8156a8c…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:22:53Z</td>
+          <td>timeline:T08</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">c048f093b8…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:23:54Z</td>
+          <td>spec</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">a235b1a18f…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:23:54Z</td>
+          <td>plan:batch</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">05e8c7db5a…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:23:54Z</td>
+          <td>timeline:T01</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">c4c718eb73…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:23:54Z</td>
+          <td>timeline:T02</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">0ffd9a75a7…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:23:54Z</td>
+          <td>timeline:T03</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">a98e0892da…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:23:54Z</td>
+          <td>timeline:T04</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">d74249ec16…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:23:54Z</td>
+          <td>timeline:T05</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">94e85219a8…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:23:54Z</td>
+          <td>timeline:T06</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">0e24914175…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:23:54Z</td>
+          <td>timeline:T07</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">93d8156a8c…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:23:54Z</td>
+          <td>timeline:T08</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">c048f093b8…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:23:54Z</td>
+          <td>spec</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">a235b1a18f…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:23:54Z</td>
+          <td>plan:batch</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">05e8c7db5a…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:23:54Z</td>
+          <td>timeline:T01</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">c4c718eb73…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:23:54Z</td>
+          <td>timeline:T02</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">0ffd9a75a7…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:23:54Z</td>
+          <td>timeline:T03</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">a98e0892da…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:23:54Z</td>
+          <td>timeline:T04</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">d74249ec16…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:23:54Z</td>
+          <td>timeline:T05</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">94e85219a8…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:23:54Z</td>
+          <td>timeline:T06</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">0e24914175…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:23:54Z</td>
+          <td>timeline:T07</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">93d8156a8c…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:23:54Z</td>
+          <td>timeline:T08</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">c048f093b8…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:27:02Z</td>
+          <td>spec</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">a235b1a18f…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:27:02Z</td>
+          <td>plan:batch</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">05e8c7db5a…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:27:02Z</td>
+          <td>timeline:T01</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">c4c718eb73…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:27:02Z</td>
+          <td>timeline:T02</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">0ffd9a75a7…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:27:02Z</td>
+          <td>timeline:T03</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">a98e0892da…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:27:02Z</td>
+          <td>timeline:T04</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">d74249ec16…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:27:02Z</td>
+          <td>timeline:T05</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">94e85219a8…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:27:02Z</td>
+          <td>timeline:T06</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">0e24914175…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:27:02Z</td>
+          <td>timeline:T07</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">93d8156a8c…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:27:02Z</td>
+          <td>timeline:T08</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">c048f093b8…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:27:03Z</td>
+          <td>spec</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">a235b1a18f…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:27:03Z</td>
+          <td>plan:batch</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">05e8c7db5a…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:27:03Z</td>
+          <td>timeline:T01</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">c4c718eb73…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:27:03Z</td>
+          <td>timeline:T02</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">0ffd9a75a7…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:27:03Z</td>
+          <td>timeline:T03</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">a98e0892da…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:27:03Z</td>
+          <td>timeline:T04</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">d74249ec16…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:27:03Z</td>
+          <td>timeline:T05</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">94e85219a8…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:27:03Z</td>
+          <td>timeline:T06</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">0e24914175…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:27:03Z</td>
+          <td>timeline:T07</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">93d8156a8c…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:27:03Z</td>
+          <td>timeline:T08</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">c048f093b8…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:27:03Z</td>
+          <td>timeline:T_SMALL</td>
+          <td>gemini-2.5-flash</td>
+          <td>
+            
+            <span class="tag-network">network</span>
+            
+          </td>
+          <td style="font-family:monospace">113a468397…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:27:03Z</td>
+          <td>timeline:T_OVERSIZED</td>
+          <td>gemini-2.5-flash</td>
+          <td>
+            
+            <span class="tag-network">network</span>
+            
+          </td>
+          <td style="font-family:monospace">c2102636c3…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:27:03Z</td>
+          <td>timeline:T_OVERSIZED</td>
+          <td>gemini-2.5-flash</td>
+          <td>
+            
+            <span class="tag-network">network</span>
+            
+          </td>
+          <td style="font-family:monospace">4d48c68b97…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:27:19Z</td>
+          <td>timeline:T_SMALL</td>
+          <td>gemini-2.5-flash</td>
+          <td>
+            
+            <span class="tag-network">network</span>
+            
+          </td>
+          <td style="font-family:monospace">113a468397…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:27:19Z</td>
+          <td>timeline:T_OVERSIZED</td>
+          <td>gemini-2.5-flash</td>
+          <td>
+            
+            <span class="tag-network">network</span>
+            
+          </td>
+          <td style="font-family:monospace">c2102636c3…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:27:19Z</td>
+          <td>timeline:T_OVERSIZED</td>
+          <td>gemini-2.5-flash</td>
+          <td>
+            
+            <span class="tag-network">network</span>
+            
+          </td>
+          <td style="font-family:monospace">4d48c68b97…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:28:25Z</td>
+          <td>spec</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">a235b1a18f…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:28:25Z</td>
+          <td>plan:batch</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">05e8c7db5a…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:28:25Z</td>
+          <td>timeline:T01</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">c4c718eb73…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:28:26Z</td>
+          <td>timeline:T02</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">0ffd9a75a7…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:28:26Z</td>
+          <td>timeline:T03</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">a98e0892da…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:28:26Z</td>
+          <td>timeline:T04</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">d74249ec16…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:28:26Z</td>
+          <td>timeline:T05</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">94e85219a8…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:28:26Z</td>
+          <td>timeline:T06</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">0e24914175…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:28:26Z</td>
+          <td>timeline:T07</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">93d8156a8c…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:28:26Z</td>
+          <td>timeline:T08</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">c048f093b8…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:28:26Z</td>
+          <td>spec</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">a235b1a18f…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:28:26Z</td>
+          <td>plan:batch</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">05e8c7db5a…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:28:26Z</td>
+          <td>timeline:T01</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">c4c718eb73…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:28:26Z</td>
+          <td>timeline:T02</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">0ffd9a75a7…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:28:26Z</td>
+          <td>timeline:T03</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">a98e0892da…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:28:26Z</td>
+          <td>timeline:T04</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">d74249ec16…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:28:26Z</td>
+          <td>timeline:T05</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">94e85219a8…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:28:26Z</td>
+          <td>timeline:T06</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">0e24914175…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:28:26Z</td>
+          <td>timeline:T07</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">93d8156a8c…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:28:26Z</td>
+          <td>timeline:T08</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">c048f093b8…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:28:27Z</td>
+          <td>timeline:T_SMALL</td>
+          <td>gemini-2.5-flash</td>
+          <td>
+            
+            <span class="tag-network">network</span>
+            
+          </td>
+          <td style="font-family:monospace">113a468397…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:28:27Z</td>
+          <td>timeline:T_OVERSIZED</td>
+          <td>gemini-2.5-flash</td>
+          <td>
+            
+            <span class="tag-network">network</span>
+            
+          </td>
+          <td style="font-family:monospace">c2102636c3…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:28:27Z</td>
+          <td>timeline:T_OVERSIZED</td>
+          <td>gemini-2.5-flash</td>
+          <td>
+            
+            <span class="tag-network">network</span>
+            
+          </td>
+          <td style="font-family:monospace">4d48c68b97…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:28:27Z</td>
+          <td>timeline:T_OVERSIZED</td>
+          <td>gemini-2.5-flash</td>
+          <td>
+            
+            <span class="tag-network">network</span>
+            
+          </td>
+          <td style="font-family:monospace">7027b588b3…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:38:38Z</td>
+          <td>spec</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">a235b1a18f…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:38:38Z</td>
+          <td>plan:batch</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">05e8c7db5a…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:38:38Z</td>
+          <td>timeline:T01</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">c4c718eb73…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:38:38Z</td>
+          <td>timeline:T02</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">0ffd9a75a7…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:38:38Z</td>
+          <td>timeline:T03</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">a98e0892da…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:38:38Z</td>
+          <td>timeline:T04</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">d74249ec16…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:38:38Z</td>
+          <td>timeline:T05</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">94e85219a8…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:38:38Z</td>
+          <td>timeline:T06</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">0e24914175…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:38:38Z</td>
+          <td>timeline:T07</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">93d8156a8c…</td>
+        </tr>
+        
+        <tr>
+          <td>2026-09-20T13:38:38Z</td>
+          <td>timeline:T08</td>
+          <td>qwen2.5:7b-instruct</td>
+          <td>
+            
+            <span class="tag-cached">cache</span>
+            
+          </td>
+          <td style="font-family:monospace">c048f093b8…</td>
         </tr>
         
       </tbody>
     </table>
     
-  </section>
-
-  
-  
-
-  
-  <section>
-    <h2>Test Timelines (2)</h2>
-    
-    <table>
-      <thead>
-        <tr><th>Test ID</th><th>Requirements</th><th>Duration</th><th>Events</th></tr>
-      </thead>
-      <tbody>
-        
-        <tr>
-          <td>T01</td>
-          <td>R1</td>
-          <td>12000 ms</td>
-          <td>3</td>
-        </tr>
-        
-        <tr>
-          <td>T02</td>
-          <td>R2</td>
-          <td>2000 ms</td>
-          <td>1</td>
-        </tr>
-        
-      </tbody>
-    </table>
-    
-  </section>
-
-</main>
-
-
-<footer>
-  <h3>LLM Provenance</h3>
-  
-    <p class="empty">No LLM calls recorded (mock run or offline replay).</p>
-  
-</footer>
+  </footer>
 
 </body>
+
 </html>

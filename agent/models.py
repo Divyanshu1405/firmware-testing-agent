@@ -51,6 +51,7 @@ class Timeline(BaseModel):
     test_id: str
     requirement_ids: List[str] = Field(min_length=1)
     duration_ms: int = Field(ge=0)
+    healed: bool = False
     events: List[TimelineEvent]
 
 
@@ -187,6 +188,7 @@ class AgentState(BaseModel):
     firmware_path: str = ""
     spec_text: str = ""
     requirements: List[Requirement] = []
+    test_plan: List[dict] = []
     timelines: List[Timeline] = []
     traces: List[Trace] = []
     monitors: List[Monitor] = []

@@ -9,5 +9,4 @@ tenacity
 jinja2
 matplotlib
 pytest
-rich
-typer
+pytest-timeout

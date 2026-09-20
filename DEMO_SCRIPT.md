@@ -1,54 +1,23 @@
-# DEMO_SCRIPT.md
+# Firmware Testing Agent Demo
 
-## Two-minute walkthrough — Firmware Testing Agent (Person C)
+Welcome to the autonomous firmware testing agent. This demo illustrates how the system deterministically acts on firmware hardware models versus simulated mock environments to validate requirements strictly.
 
-### What you say / what runs
-
-**[0:00–0:20] Setup**
-> "We start with a firmware binary and a README spec. The agent reads the spec,
-> extracts testable requirements, and auto-generates timed test timelines — entirely
-> driven by a Gemini LLM with an Ollama fallback."
-
-```powershell
-# Show the spec
-cat README.md
-# Show the .env (masked) and requirements.txt
-cat .env.example
+## 1. Simulated Demo Failure (Isolated Bug)
+*This command executes a purely simulated edge case (fan failure against thermal threshold mapped to requirement R7) rendering it into `out/demo_fail_report.html` securely. It does not hit the network or run standard graph compilation.*
+```bash
+python -m agent.run dummy_fw.bin --spec tests/fixtures/sample_spec.md --demo-failure
 ```
 
----
-
-**[0:20–1:00] Full offline replay**
-> "The real Gemini responses are already cached in `demo_cache/`.
-> Watch the agent run completely offline — no network, identical output."
-
-```powershell
-$env:LLM_OFFLINE="1"
-python -m agent.run dummy_fw.bin --spec README.md
+## 2. Standard Offline Execution (Green Path Replay)
+*This strictly simulates the end-to-end LangGraph processing timeline (Spec Extraction -> Planning -> Generation -> Mock Judging -> Report) bypassing LLMs via local cache validation. It validates compliance dynamically against frozen schemas.*
+```bash
+LLM_OFFLINE=1 python -m agent.run dummy_fw.bin --spec tests/fixtures/sample_spec.md
 ```
 
-Point to what prints:
-- `[run] LLM_OFFLINE=True`
-- requirements extracted, timelines compiled, verdicts computed
-- `[run] report → out/report.html`
+## 3. Strict Validation Pychecks
+*This executes securely mocked offline graph parsing checks validating reporting templates, timelines bounded deterministic healing, and router fallback capabilities organically.*
+```bash
+pytest -v
+```
 
----
-
-**[1:00–1:30] Open the report**
-> "Here's the HTML report: requirements list, verdict table (PASS/FAIL/INCONCLUSIVE),
-> failure hypotheses from the LLM, and a provenance footer showing exactly which model
-> answered each step — Gemini or Ollama — and whether it was a network call or cache hit."
-
-Open `out/report.html` in browser.
-
----
-
-**[1:30–2:00] Q&A cue**
-> "The agent's pipeline is fully deterministic on re-run.
-> All PASS/FAIL verdicts come from the Python judge — never from the LLM.
-> The LLM only produces structured JSON (requirements, timelines, explanations)
-> which is then validated against shared team schemas before use."
-
----
-
-_Demo recording: `LLM_OFFLINE=1 python -m agent.run dummy_fw.bin --spec README.md`_
+> **IMPORTANT:** In this initial iteration (Person C), all backend simulation is executed via simulated placeholders natively. `agent/fake_agent.py` drives the pass/fails transparently. The explicit trace models strictly represent the contracts passed to future hardware simulation suites natively.

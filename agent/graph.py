@@ -45,8 +45,8 @@ def plan_node(state: AgentState) -> AgentState:
         return state
     from agent.steps.plan import generate_plan
     try:
-        timelines = generate_plan(state.requirements)
-        return state.model_copy(update={"timelines": timelines})
+        test_plan = generate_plan(state.requirements)
+        return state.model_copy(update={"test_plan": test_plan})
     except Exception as exc:
         return state.model_copy(update={"error": f"plan_node: {exc}"})
 
@@ -55,10 +55,10 @@ def timeline_node(state: AgentState) -> AgentState:
     """Compile/lint timelines (stand-in lint if A's isn't ready)."""
     if state.error:
         return state
-    from agent.steps.timelines import lint_timelines
+    from agent.steps.timelines import expand_plan_to_timelines
     try:
-        clean = lint_timelines(state.timelines)
-        return state.model_copy(update={"timelines": clean})
+        timelines = expand_plan_to_timelines(state.test_plan, state.requirements)
+        return state.model_copy(update={"timelines": timelines})
     except Exception as exc:
         return state.model_copy(update={"error": f"timeline_node: {exc}"})
 

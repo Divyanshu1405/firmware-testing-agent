@@ -135,8 +135,8 @@ class _RateLimitError(Exception):
 
 @retry(
     retry=retry_if_exception_type(_RateLimitError),
-    wait=wait_exponential(multiplier=2, min=4, max=60),
-    stop=stop_after_attempt(4),
+    wait=wait_exponential(multiplier=1, min=1, max=5),
+    stop=stop_after_attempt(2),
     reraise=True,
 )
 def _call_gemini(prompt: str, model: str) -> str:
