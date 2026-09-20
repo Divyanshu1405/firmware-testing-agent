@@ -1,30 +1,36 @@
-# PS3 Firmware Testing Agent
+# Firmware Testing Agent
 
-Bare-bones starting repository for **AI Agent for Autonomous Embedded Firmware Testing**.
+Autonomous embedded firmware testing with Renode, deterministic traces, and a Python judge.
 
-## Initial stack
+## Quick start
 
-- Frontend: React
-- Backend: FastAPI / Python
-- LLM: Gemini API, with Ollama fallback planned
-- Firmware analysis: Tree-sitter + Gemini
-- Agent orchestration: LangGraph
-- Simulation: Renode + Wokwi
-- PASS/FAIL: deterministic Python judge
-- Report: HTML -> PDF
-- Database: none
-
-## Current product flow
-
-```text
-Firmware upload
-    -> firmware analysis
-    -> test-plan generation
-    -> simulation (Renode/Wokwi)
-    -> deterministic verdict
-    -> failure analysis
-    -> report
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r backend\requirements.txt
+python run_demo.py --offline
 ```
+
+The offline demo writes `out/demo_trace.json` and `out/report.html` without network access or API keys.
+
+## Renode probe
+
+Renode `1.17.0` is expected on `PATH`.
+
+```powershell
+python .\sim\probe_sensor.py
+python .\sim\probe_sensor.py --injected
+```
+
+The injected probe uses the STM32F4 board, I2C1 at SI7021 address `0x40`, and USART2. The project-owned model produces a calibrated default of 25 C and 50 percent RH for this firmware.
+
+## Project layout
+
+- `sim/`: Renode backend, environment generation, linting, faults, matrix runner
+- `profile/`: firmware IO map
+- `contracts/`: timeline, trace, and verdict examples
+- `report/`: failure plots
+- `backend/`: API and agent modules
 
 ## Run backend
 

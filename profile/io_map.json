@@ -1,0 +1,30 @@
+{
+  "firmware": "firmware1.elf",
+  "platform": "platforms/boards/stm32f4_discovery-kit.repl",
+  "uart": "sysbus.usart2",
+  "inputs": {
+    "temp_c": {
+      "kind": "i2c",
+      "peripheral": "sysbus.i2c1",
+      "address": "0x40",
+      "model": "SI7021"
+    },
+    "humidity_pct": {
+      "kind": "i2c",
+      "peripheral": "sysbus.i2c1",
+      "address": "0x40",
+      "model": "SI7021"
+    }
+  },
+  "outputs": {
+    "uart": {
+      "kind": "uart",
+      "peripheral": "sysbus.usart2"
+    }
+  },
+  "notes": [
+    "firmware1 uses HAL I2C1 and USART2 based on ELF symbols",
+    "SI7021 is attached at I2C address 0x40 via sim/si7021.repl",
+    "Temperature and humidity injection is verified through sim/si7021_injected.py; default output is 25 C and 50 percent RH"
+  ]
+}

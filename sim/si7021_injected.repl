@@ -1,0 +1,1 @@
+sensor_si7021: Mocks.DummyI2CSlave @ i2c1 0x40
