@@ -1,0 +1,43 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "io_map.schema.json",
+  "title": "IO map",
+  "type": "object",
+  "required": ["firmware", "platform", "uart", "inputs", "outputs", "notes"],
+  "additionalProperties": false,
+  "properties": {
+    "firmware": { "type": "string" },
+    "platform": { "type": "string" },
+    "uart": { "type": "string" },
+    "inputs": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["kind", "peripheral"],
+        "additionalProperties": true,
+        "properties": {
+          "kind": { "type": "string" },
+          "peripheral": { "type": "string" },
+          "channel": { "type": ["integer", "null"] },
+          "scale": { "type": ["number", "null"] }
+        }
+      }
+    },
+    "outputs": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["kind"],
+        "additionalProperties": true,
+        "properties": {
+          "kind": { "type": "string" },
+          "pin": { "type": "string" }
+        }
+      }
+    },
+    "notes": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  }
+}

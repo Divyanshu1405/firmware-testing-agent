@@ -1,0 +1,9 @@
+{
+  "monitor_id": "M2",
+  "requirement_id": "R2",
+  "kind": "within",
+  "when": { "channel": "temp_c", "op": ">", "value": 30, "hold_ms": 2000 },
+  "then": { "channel": "gpio.PA5", "op": "==", "value": 1 },
+  "within_ms": 1000,
+  "oracle_source": "spec"
+}

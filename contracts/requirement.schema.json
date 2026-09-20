@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "requirement.schema.json",
+  "title": "Requirement",
+  "type": "object",
+  "required": ["id", "description", "source", "source_line"],
+  "additionalProperties": false,
+  "properties": {
+    "id": { "type": "string" },
+    "description": { "type": "string" },
+    "source": { "type": "string" },
+    "source_line": { "type": "integer", "minimum": 1 },
+    "threshold": { "type": ["number", "null"] },
+    "time_value_ms": { "type": ["integer", "null"] },
+    "ambiguous": { "type": "boolean" }
+  }
+}

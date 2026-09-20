@@ -1,0 +1,47 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "trace.schema.json",
+  "title": "Trace",
+  "type": "object",
+  "required": ["test_id", "firmware", "sim", "seed", "samples", "events", "end_reason"],
+  "additionalProperties": false,
+  "properties": {
+    "test_id": { "type": "string" },
+    "firmware": { "type": "string" },
+    "sim": { "type": "string" },
+    "seed": { "type": "integer" },
+    "samples": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["t_ms", "dir", "channel", "value"],
+        "additionalProperties": false,
+        "properties": {
+          "t_ms": { "type": "integer", "minimum": 0 },
+          "dir": { "type": "string", "enum": ["in", "out"] },
+          "channel": { "type": "string" },
+          "value": {}
+        }
+      }
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["t_ms", "kind"],
+        "additionalProperties": false,
+        "properties": {
+          "t_ms": { "type": "integer", "minimum": 0 },
+          "kind": {
+            "type": "string",
+            "enum": ["hardfault", "reset", "hang", "invalid_memory_access"]
+          }
+        }
+      }
+    },
+    "end_reason": {
+      "type": "string",
+      "enum": ["duration_reached", "timeout", "crash", "sim_error"]
+    }
+  }
+}

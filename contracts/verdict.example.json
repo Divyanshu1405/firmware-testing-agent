@@ -1,6 +1,8 @@
 {
-  "test_id": "T1",
-  "status": "PASS",
-  "expected": {},
-  "observed": {}
+  "test_id": "T07",
+  "monitor_id": "M2",
+  "requirement_id": "R2",
+  "result": "FAIL",
+  "evidence": { "t_ms": 9100, "detail": "fan still 0 at 9100 ms, expected 1 by 9000 ms" },
+  "oracle_source": "spec"
 }

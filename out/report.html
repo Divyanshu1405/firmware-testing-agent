@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Firmware Test Report — dummy_fw.bin</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 0;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0f1117; color: #e2e8f0;
+      line-height: 1.6;
+    }
+    header {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      border-bottom: 2px solid #334155;
+      padding: 2rem 3rem;
+    }
+    header h1 { margin: 0; font-size: 1.6rem; color: #38bdf8; }
+    header p  { margin: 0.25rem 0 0; font-size: 0.85rem; color: #94a3b8; }
+    main { padding: 2rem 3rem; max-width: 1200px; margin: 0 auto; }
+
+    section { margin-bottom: 2.5rem; }
+    h2 {
+      font-size: 1.1rem; font-weight: 600; color: #7dd3fc;
+      border-bottom: 1px solid #1e293b; padding-bottom: 0.4rem;
+      margin-bottom: 1rem;
+    }
+
+    /* verdict summary banner */
+    .banner {
+      padding: 1rem 1.5rem; border-radius: 8px;
+      font-size: 1rem; font-weight: 600; margin-bottom: 1.5rem;
+    }
+    .banner.pass { background: #052e16; color: #4ade80; border: 1px solid #16a34a; }
+    .banner.fail { background: #450a0a; color: #f87171; border: 1px solid #dc2626; }
+
+    /* tables */
+    table {
+      width: 100%; border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+    th {
+      background: #1e293b; color: #94a3b8;
+      padding: 0.55rem 0.75rem; text-align: left;
+      border-bottom: 1px solid #334155;
+    }
+    td {
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid #1e293b;
+    }
+    tr:hover td { background: #1a2235; }
+    .badge {
+      display: inline-block; padding: 0.15rem 0.55rem;
+      border-radius: 9999px; font-size: 0.75rem; font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+    .badge-pass { background: #052e16; color: #4ade80; }
+    .badge-fail { background: #450a0a; color: #f87171; }
+    .badge-inc  { background: #1c1917; color: #fbbf24; }
+
+    /* requirements */
+    .req-list { display: flex; flex-direction: column; gap: 0.6rem; }
+    .req-card {
+      background: #1e293b; border: 1px solid #334155;
+      border-radius: 6px; padding: 0.75rem 1rem;
+    }
+    .req-card .req-id { font-weight: 700; color: #38bdf8; margin-right: 0.5rem; }
+    .req-card .req-meta { font-size: 0.75rem; color: #64748b; margin-top: 0.3rem; }
+
+    /* explanations */
+    .explain-block {
+      background: #1c1917; border-left: 3px solid #f59e0b;
+      padding: 0.75rem 1rem; border-radius: 0 6px 6px 0;
+      margin-bottom: 0.75rem; font-size: 0.85rem;
+    }
+    .explain-block .test-label {
+      font-weight: 700; color: #fbbf24; margin-bottom: 0.3rem;
+    }
+
+    /* provenance footer */
+    footer {
+      background: #0f1117; border-top: 1px solid #1e293b;
+      padding: 1.5rem 3rem; font-size: 0.78rem; color: #64748b;
+    }
+    footer h3 { color: #94a3b8; margin: 0 0 0.5rem; font-size: 0.85rem; }
+    .prov-table td, .prov-table th {
+      padding: 0.35rem 0.6rem;
+    }
+    .tag-cached  { color: #4ade80; }
+    .tag-network { color: #60a5fa; }
+
+    /* no-data notice */
+    .empty { color: #475569; font-style: italic; font-size: 0.85rem; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Firmware Test Report</h1>
+  <p>Firmware: <code>dummy_fw.bin</code></p>
+</header>
+
+<main>
+
+  
+  
+    
+      <div class="banner pass">✓ All tests PASSED</div>
+    
+  
+
+  
+  <section>
+    <h2>Requirements (2)</h2>
+    
+      <div class="req-list">
+        
+        <div class="req-card">
+          <span class="req-id">R1</span>Fan must activate within 1000 ms when temperature exceeds 30°C for ≥2 s.
+          <div class="req-meta">
+            Source: README.md line 22
+             · threshold: 30.0
+             · time limit: 1000 ms
+            
+          </div>
+        </div>
+        
+        <div class="req-card">
+          <span class="req-id">R2</span>UART must echo &#39;READY&#39; within 500 ms of power-on.
+          <div class="req-meta">
+            Source: README.md line 26
+            
+             · time limit: 500 ms
+            
+          </div>
+        </div>
+        
+      </div>
+    
+  </section>
+
+  
+  <section>
+    <h2>Verdicts (2)</h2>
+    
+    <table>
+      <thead>
+        <tr>
+          <th>Test ID</th><th>Requirement</th><th>Monitor</th>
+          <th>Result</th><th>Evidence</th><th>Oracle</th>
+        </tr>
+      </thead>
+      <tbody>
+        
+        <tr>
+          <td>T01</td>
+          <td>R1</td>
+          <td>M1</td>
+          <td>
+            
+              <span class="badge badge-pass">PASS</span>
+            
+          </td>
+          <td>gpio.PA5 went HIGH at 6000 ms, within 1000 ms of threshold. <span style="color:#64748b">(t=6000 ms)</span></td>
+          <td>spec</td>
+        </tr>
+        
+        <tr>
+          <td>T02</td>
+          <td>R2</td>
+          <td>M2</td>
+          <td>
+            
+              <span class="badge badge-pass">PASS</span>
+            
+          </td>
+          <td>UART echoed READY at 100 ms, within 500 ms. <span style="color:#64748b">(t=100 ms)</span></td>
+          <td>spec</td>
+        </tr>
+        
+      </tbody>
+    </table>
+    
+  </section>
+
+  
+  
+
+  
+  <section>
+    <h2>Test Timelines (2)</h2>
+    
+    <table>
+      <thead>
+        <tr><th>Test ID</th><th>Requirements</th><th>Duration</th><th>Events</th></tr>
+      </thead>
+      <tbody>
+        
+        <tr>
+          <td>T01</td>
+          <td>R1</td>
+          <td>12000 ms</td>
+          <td>3</td>
+        </tr>
+        
+        <tr>
+          <td>T02</td>
+          <td>R2</td>
+          <td>2000 ms</td>
+          <td>1</td>
+        </tr>
+        
+      </tbody>
+    </table>
+    
+  </section>
+
+</main>
+
+
+<footer>
+  <h3>LLM Provenance</h3>
+  
+    <p class="empty">No LLM calls recorded (mock run or offline replay).</p>
+  
+</footer>
+
+</body>
+</html>

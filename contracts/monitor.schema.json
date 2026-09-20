@@ -1,0 +1,42 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "monitor.schema.json",
+  "title": "Monitor",
+  "type": "object",
+  "required": ["monitor_id", "requirement_id", "kind", "when", "oracle_source"],
+  "additionalProperties": false,
+  "properties": {
+    "monitor_id": { "type": "string" },
+    "requirement_id": { "type": "string" },
+    "kind": {
+      "type": "string",
+      "enum": ["always", "never", "within", "eventually"]
+    },
+    "when": {
+      "type": "object",
+      "required": ["channel", "op", "value"],
+      "additionalProperties": true,
+      "properties": {
+        "channel": { "type": "string" },
+        "op": { "type": "string", "enum": ["<", "<=", "==", "!=", ">=", ">"] },
+        "value": {},
+        "hold_ms": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "then": {
+      "type": "object",
+      "required": ["channel", "op", "value"],
+      "additionalProperties": true,
+      "properties": {
+        "channel": { "type": "string" },
+        "op": { "type": "string", "enum": ["<", "<=", "==", "!=", ">=", ">"] },
+        "value": {}
+      }
+    },
+    "within_ms": { "type": "integer", "minimum": 0 },
+    "oracle_source": {
+      "type": "string",
+      "enum": ["spec", "inferred", "generic"]
+    }
+  }
+}

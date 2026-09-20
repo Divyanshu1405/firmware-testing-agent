@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "verdict.schema.json",
+  "title": "Verdict",
+  "type": "object",
+  "required": ["test_id", "monitor_id", "requirement_id", "result", "evidence", "oracle_source"],
+  "additionalProperties": false,
+  "properties": {
+    "test_id": { "type": "string" },
+    "monitor_id": { "type": "string" },
+    "requirement_id": { "type": "string" },
+    "result": {
+      "type": "string",
+      "enum": ["PASS", "FAIL", "INCONCLUSIVE"]
+    },
+    "evidence": {
+      "type": "object",
+      "required": ["t_ms", "detail"],
+      "additionalProperties": true,
+      "properties": {
+        "t_ms": { "type": "integer", "minimum": 0 },
+        "detail": { "type": "string" }
+      }
+    },
+    "oracle_source": {
+      "type": "string",
+      "enum": ["spec", "inferred", "generic"]
+    }
+  }
+}

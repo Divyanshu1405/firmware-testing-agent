@@ -1,4 +1,15 @@
 {
-  "test_id": "T1",
-  "events": []
+  "test_id": "T07",
+  "firmware": "original.elf",
+  "sim": "renode",
+  "seed": 0,
+  "samples": [
+    { "t_ms": 1200, "dir": "in", "channel": "temp_c", "value": 31.0 },
+    { "t_ms": 1200, "dir": "out", "channel": "uart", "value": "t=1200 temp=31 fan=1" },
+    { "t_ms": 1210, "dir": "out", "channel": "gpio.PA5", "value": 1 }
+  ],
+  "events": [
+    { "t_ms": 9000, "kind": "hardfault" }
+  ],
+  "end_reason": "duration_reached"
 }
