@@ -15,3 +15,5 @@ rich
 typer
 pyelftools
 matplotlib
+capstone
+keystone-engine
