@@ -1,0 +1,51 @@
+[
+  {
+    "id": "REQ-01",
+    "title": "Periodic Telemetry Reporting",
+    "description": "The firmware shall periodically transmit telemetry frames over USART2 every 2000 ms under normal operational conditions.",
+    "source": "main loop HAL_Delay(2000) at 0x80012f0 and HAL_UART_Transmit at 0x80012ec",
+    "channel": "uart",
+    "period_ms": 2000,
+    "ambiguity_notes": "The specification does not clarify whether the 2000 ms period includes I2C sensor conversion delay (~30 ms) and UART transmission latency, or if timer interrupts trigger measurements at strict 2000 ms intervals."
+  },
+  {
+    "id": "REQ-02",
+    "title": "Valid Telemetry Format",
+    "description": "Under normal sensor operation, the UART transmission shall contain formatted sensor data matching 'Humidity: %d Temperature: %d'.",
+    "source": "rodata format string at 0x8001d62 referenced by main at 0x8001304",
+    "channel": "uart"
+  },
+  {
+    "id": "REQ-03",
+    "title": "Sensor Fault Indication",
+    "description": "When the Si7021 sensor returns an error code (0xFFFF) over I2C1, the firmware shall transmit 'Error' over USART2.",
+    "source": "main error handling branch at 0x80012dc-0x80012e6 referencing rodata 'Error' at 0x8001d5c",
+    "channel": "uart"
+  },
+  {
+    "id": "REQ-04",
+    "title": "Relative Humidity Physical Range",
+    "description": "Reported relative humidity shall remain within physical atmospheric sensor bounds between 0% and 100% RH.",
+    "source": "Si7021 sensor specification and conversion formula at 0x80013d4-0x80013da",
+    "channel": "humidity_pct",
+    "min": 0,
+    "max": 100
+  },
+  {
+    "id": "REQ-05",
+    "title": "Temperature Operating Range",
+    "description": "Reported temperature shall remain within the Si7021 physical operating limits of -40°C to +125°C.",
+    "source": "Si7021 datasheet operating temperature range and conversion routine at 0x8001320",
+    "channel": "temp_c",
+    "min": -40.0,
+    "max": 125.0,
+    "ambiguity_notes": "Firmware transmits temperature as hundredths of a degree Celsius (centi-degrees, e.g. 2500 for 25°C) rather than floating-point or integer degrees, which may lead to scale interpretation ambiguity if uncalibrated."
+  },
+  {
+    "id": "REQ-06",
+    "title": "Continuous Execution Integrity",
+    "description": "The firmware shall execute continuously without triggering HardFault, BusFault, or unexpected reset loops.",
+    "source": "STM32F407 Cortex-M4 vector table at 0x8000000 and generic reliability requirements",
+    "channel": "events"
+  }
+]
