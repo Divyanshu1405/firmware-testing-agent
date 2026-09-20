@@ -23,6 +23,11 @@ out/*
 !out/.gitkeep
 *.log
 
+# Runtime-Generated Artifacts
+llm_provenance.jsonl
+.loop/DECISIONS.md
+profile/static/static.json
+
 # User Uploads
 firmware/uploads/*
 !firmware/uploads/.gitkeep
@@ -35,8 +40,6 @@ yarn-error.log*
 
 # OS & Editor Artifacts
 .DS_Store
-.vs/
-out/
 .vs/
 Thumbs.db
 *.swp

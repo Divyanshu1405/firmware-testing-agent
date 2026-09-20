@@ -1,3 +1,4 @@
+# Core Agent & LLM orchestration
 langgraph
 langchain-core
 langchain-google-genai
@@ -8,5 +9,12 @@ jsonschema
 tenacity
 jinja2
 matplotlib
+
+# Testing & Verification
 pytest
 pytest-timeout
+
+# Binary Analysis & Firmware Mutation
+pyelftools
+capstone
+keystone-engine
