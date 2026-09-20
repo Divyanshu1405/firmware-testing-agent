@@ -1,0 +1,23 @@
+{
+    "test_id": "MC_T02_ACTUATOR",
+    "requirement_ids": [
+        "R_MC_2"
+    ],
+    "duration_ms": 2000,
+    "events": [
+        {
+            "at_ms": 500,
+            "action": "glitch",
+            "channel": "gpio_trigger",
+            "for_ms": 10,
+            "expect_uart_contains": "ACTUATOR: BOUNCE IGN"
+        },
+        {
+            "at_ms": 1500,
+            "action": "step",
+            "channel": "gpio_trigger",
+            "value": 1,
+            "expect_uart_contains": "ACTUATOR: ON"
+        }
+    ]
+}

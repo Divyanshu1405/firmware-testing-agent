@@ -1,0 +1,23 @@
+{
+    "test_id": "MC_T03_UART",
+    "requirement_ids": [
+        "R_MC_3"
+    ],
+    "duration_ms": 2000,
+    "events": [
+        {
+            "at_ms": 500,
+            "action": "uart_garbage",
+            "channel": "uart1_rx",
+            "for_ms": 200,
+            "expect_uart_contains": "UART: DROP MALFORMED"
+        },
+        {
+            "at_ms": 1500,
+            "action": "uart_write",
+            "channel": "uart1_rx",
+            "value": "READY_CMD\n",
+            "expect_uart_contains": "UART: PARSED OK"
+        }
+    ]
+}
