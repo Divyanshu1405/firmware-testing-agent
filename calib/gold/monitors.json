@@ -1,0 +1,97 @@
+[
+  {
+    "monitor_id": "M_TELEMETRY_PERIOD",
+    "requirement_id": "REQ-01",
+    "kind": "eventually",
+    "then": {
+      "channel": "uart",
+      "op": "contains",
+      "value": "Temperature:"
+    },
+    "within_ms": 3000,
+    "oracle_source": "spec"
+  },
+  {
+    "monitor_id": "M_TELEMETRY_FORMAT",
+    "requirement_id": "REQ-02",
+    "kind": "always",
+    "then": {
+      "channel": "uart",
+      "op": "contains",
+      "value": "Humidity:"
+    },
+    "oracle_source": "spec"
+  },
+  {
+    "monitor_id": "M_ERROR_REPORTING",
+    "requirement_id": "REQ-03",
+    "kind": "within",
+    "when": {
+      "channel": "sensor_fault",
+      "op": "==",
+      "value": 1
+    },
+    "then": {
+      "channel": "uart",
+      "op": "contains",
+      "value": "Error"
+    },
+    "within_ms": 2500,
+    "oracle_source": "spec"
+  },
+  {
+    "monitor_id": "M_HUMIDITY_RANGE_HIGH",
+    "requirement_id": "REQ-04",
+    "kind": "always",
+    "then": {
+      "channel": "humidity_pct",
+      "op": "<=",
+      "value": 100.0
+    },
+    "oracle_source": "spec"
+  },
+  {
+    "monitor_id": "M_HUMIDITY_RANGE_LOW",
+    "requirement_id": "REQ-04",
+    "kind": "always",
+    "then": {
+      "channel": "humidity_pct",
+      "op": ">=",
+      "value": 0.0
+    },
+    "oracle_source": "spec"
+  },
+  {
+    "monitor_id": "M_TEMP_RANGE_HIGH",
+    "requirement_id": "REQ-05",
+    "kind": "always",
+    "then": {
+      "channel": "temp_c",
+      "op": "<=",
+      "value": 125.0
+    },
+    "oracle_source": "spec"
+  },
+  {
+    "monitor_id": "M_TEMP_RANGE_LOW",
+    "requirement_id": "REQ-05",
+    "kind": "always",
+    "then": {
+      "channel": "temp_c",
+      "op": ">=",
+      "value": -40.0
+    },
+    "oracle_source": "spec"
+  },
+  {
+    "monitor_id": "M_NO_HARDFAULT",
+    "requirement_id": "REQ-06",
+    "kind": "never",
+    "then": {
+      "channel": "events",
+      "op": "==",
+      "value": "hardfault"
+    },
+    "oracle_source": "spec"
+  }
+]

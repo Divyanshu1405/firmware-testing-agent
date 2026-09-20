@@ -1,0 +1,74 @@
+{
+  "mutants": [
+    {
+      "mutant_id": "MUTANT_01",
+      "filename": "mutant_1_branch_inversion.elf",
+      "function": "main",
+      "address": "0x80012e0",
+      "original_bytes": "0bd1",
+      "mutated_bytes": "0bd0",
+      "original_instruction": "bne #0x80012fa",
+      "mutated_instruction": "beq #0x80012fa",
+      "category": "conditional_branch_inversion",
+      "description": "Inverts sensor error check in main. Success branch jumps to error logging; error branch attempts to read temperature.",
+      "expected_violation": "REQ-02",
+      "detection_criteria": "Transmits 'Error' instead of formatted telemetry on valid sensor reads"
+    },
+    {
+      "mutant_id": "MUTANT_02",
+      "filename": "mutant_2_timing_delay.elf",
+      "function": "main",
+      "address": "0x80012f0",
+      "original_bytes": "4ff4fa60",
+      "mutated_bytes": "4ff00000",
+      "original_instruction": "mov.w r0, #0x7d0",
+      "mutated_instruction": "mov.w r0, #0",
+      "category": "timing_delay_alteration",
+      "description": "Sets main loop HAL_Delay duration from 2000 ms to 0 ms, flooding the UART bus without inter-frame delay.",
+      "expected_violation": "REQ-01",
+      "detection_criteria": "UART transmission rate exceeds 2000 ms period or runs continuously"
+    },
+    {
+      "mutant_id": "MUTANT_03",
+      "filename": "mutant_3_humidity_offset.elf",
+      "function": "si7021_measure_humidity",
+      "address": "0x80013da",
+      "original_bytes": "0638",
+      "mutated_bytes": "0630",
+      "original_instruction": "subs r0, #6",
+      "mutated_instruction": "adds r0, #6",
+      "category": "calculation_offset_modification",
+      "description": "Replaces 'subs r0, #6' with 'adds r0, #6' in Si7021 RH formula, corrupting relative humidity calculation by +12% RH.",
+      "expected_violation": "REQ-04",
+      "detection_criteria": "Reported relative humidity exceeds physical upper bound (100% RH) or shifts by +12%"
+    },
+    {
+      "mutant_id": "MUTANT_04",
+      "filename": "mutant_4_humidity_scale.elf",
+      "function": "si7021_measure_humidity",
+      "address": "0x80013d4",
+      "original_bytes": "7d20",
+      "mutated_bytes": "0020",
+      "original_instruction": "movs r0, #0x7d",
+      "mutated_instruction": "movs r0, #0",
+      "category": "multiplier_scale_zeroing",
+      "description": "Zeroes the 125 multiplier in Si7021 RH formula (movs r0, #0), collapsing computed relative humidity to -6%.",
+      "expected_violation": "REQ-04",
+      "detection_criteria": "Reported humidity is -6%, violating lower physical bound (0% RH)"
+    },
+    {
+      "mutant_id": "MUTANT_05",
+      "filename": "mutant_5_i2c_command.elf",
+      "function": "si7021_read_previous_temperature",
+      "address": "0x80013e2",
+      "original_bytes": "e023",
+      "mutated_bytes": "ff23",
+      "original_instruction": "movs r3, #0xe0",
+      "mutated_instruction": "movs r3, #0xff",
+      "category": "i2c_command_corruption",
+      "description": "Changes Si7021 temperature read command from 0xE0 to invalid command 0xFF, triggering I2C NACK / sensor transaction failure.",
+      "expected_violation": "REQ-02",
+      "detection_criteria": "Temperature reading fails (returns 0xFFFF) or triggers error frame"
+    }
+  ]
+}

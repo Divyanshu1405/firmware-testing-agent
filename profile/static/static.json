@@ -1,0 +1,103 @@
+{
+  "file": "original.elf",
+  "format": "ELF",
+  "architecture": "ARM",
+  "entry_point": "0x8001cf1",
+  "sections": [
+    {
+      "name": "",
+      "address": "0x0",
+      "size": 0
+    },
+    {
+      "name": ".isr_vector",
+      "address": "0x8000000",
+      "size": 392
+    },
+    {
+      "name": ".text",
+      "address": "0x8000190",
+      "size": 7116
+    },
+    {
+      "name": ".rodata",
+      "address": "0x8001d5c",
+      "size": 96
+    },
+    {
+      "name": ".ARM.extab",
+      "address": "0x8001dbc",
+      "size": 0
+    },
+    {
+      "name": ".ARM",
+      "address": "0x8001dbc",
+      "size": 8
+    },
+    {
+      "name": ".preinit_array",
+      "address": "0x8001dc4",
+      "size": 0
+    },
+    {
+      "name": ".init_array",
+      "address": "0x8001dc4",
+      "size": 4
+    },
+    {
+      "name": ".fini_array",
+      "address": "0x8001dc8",
+      "size": 4
+    },
+    {
+      "name": ".data",
+      "address": "0x20000000",
+      "size": 112
+    },
+    {
+      "name": ".ccmram",
+      "address": "0x10000000",
+      "size": 0
+    },
+    {
+      "name": ".bss",
+      "address": "0x20000070",
+      "size": 204
+    },
+    {
+      "name": "._user_heap_stack",
+      "address": "0x2000013c",
+      "size": 1540
+    },
+    {
+      "name": ".ARM.attributes",
+      "address": "0x0",
+      "size": 42
+    },
+    {
+      "name": ".comment",
+      "address": "0x0",
+      "size": 126
+    },
+    {
+      "name": ".debug_frame",
+      "address": "0x0",
+      "size": 1076
+    },
+    {
+      "name": ".symtab",
+      "address": "0x0",
+      "size": 5872
+    },
+    {
+      "name": ".strtab",
+      "address": "0x0",
+      "size": 4058
+    },
+    {
+      "name": ".shstrtab",
+      "address": "0x0",
+      "size": 183
+    }
+  ]
+}
