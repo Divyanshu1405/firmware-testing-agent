@@ -58,7 +58,7 @@ def main():
         out_report = Path(os.environ.get("OUT_DIR", args.out)) / "demo_fail_report.html"
         out_report.parent.mkdir(parents=True, exist_ok=True)
         out_report.write_text(html, encoding="utf-8")
-        print(f"[run] demo failure report → {out_report}")
+        print(f"[run] demo failure report -> {out_report}")
         sys.exit(0)
 
     spec_path = Path(args.spec)
@@ -67,6 +67,10 @@ def main():
 
     print(f"[run] firmware={args.firmware}  spec={args.spec}")
     print(f"[run] LLM_OFFLINE={_is_offline()}")
+
+    if _is_offline():
+        import agent.llm.router as _r
+        _r.LLM_OFFLINE = True
 
     from agent.models import AgentState
     from agent.graph import build_graph, _write_report
@@ -85,7 +89,7 @@ def main():
         state = AgentState.model_validate(state_dict)
 
     report_path = _write_report(state.report_html, out_dir)
-    print(f"[run] report → {report_path}")
+    print(f"[run] report -> {report_path}")
 
     # Write requirements JSON for artifact tracking
     if state.requirements:
@@ -95,21 +99,21 @@ def main():
                 [r.model_dump() for r in state.requirements],
                 f, indent=2
             )
-        print(f"[run] requirements → {reqs_path}")
+        print(f"[run] requirements -> {reqs_path}")
 
     # Write test plan JSON
     if state.test_plan:
         plan_path = out_dir / "test_plan.json"
         with open(plan_path, "w", encoding="utf-8") as f:
             json.dump(state.test_plan, f, indent=2)
-        print(f"[run] test_plan → {plan_path}")
+        print(f"[run] test_plan -> {plan_path}")
 
     # Write timelines JSON
     if state.timelines:
         tl_path = out_dir / "timelines.json"
         with open(tl_path, "w", encoding="utf-8") as f:
             json.dump([t.model_dump(exclude_none=True) for t in state.timelines], f, indent=2)
-        print(f"[run] timelines → {tl_path}")
+        print(f"[run] timelines -> {tl_path}")
 
     # Validate traces before exiting (H7 gate)
     if state.traces:

@@ -1,0 +1,24 @@
+{
+  "model_used": "gemini-2.5-flash",
+  "data": {
+    "test_id": "T01",
+    "requirement_ids": [
+      "R7"
+    ],
+    "duration_ms": 3000,
+    "events": [
+      {
+        "at_ms": 0,
+        "action": "set",
+        "channel": "temp_c",
+        "value": 25.0
+      },
+      {
+        "at_ms": 1000,
+        "action": "step",
+        "channel": "temp_c",
+        "value": 35.0
+      }
+    ]
+  }
+}

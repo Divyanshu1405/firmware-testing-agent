@@ -6,6 +6,8 @@ from pathlib import Path
 def test_offline_replay_end_to_end():
     # 1. Setup offline replay environment vars
     os.environ["LLM_OFFLINE"] = "1"
+    import agent.llm.router as _router
+    _router.LLM_OFFLINE = True
     
     # 2. Build and invoke graph
     from agent.graph import build_graph
@@ -77,6 +79,8 @@ def test_offline_file_outputs(tmp_path):
     
     os.environ["LLM_OFFLINE"] = "1"
     os.environ["OUT_DIR"] = str(tmp_path)
+    import agent.llm.router as _router
+    _router.LLM_OFFLINE = True
     
     sys.argv = ["agent.run", "dummy_fw.bin", "--spec", "tests/fixtures/sample_spec.md", "--out", str(tmp_path)]
     try:

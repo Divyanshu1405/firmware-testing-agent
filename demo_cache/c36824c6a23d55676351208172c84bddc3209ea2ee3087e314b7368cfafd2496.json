@@ -1,0 +1,72 @@
+{
+  "model_used": "gemini-2.5-flash",
+  "data": {
+    "test_plan": [
+      {
+        "test_id": "T01",
+        "requirement_ids": [
+          "R7"
+        ],
+        "fault_type": "nominal",
+        "reason": "Baseline check to ensure fan activates perfectly within normal parameters."
+      },
+      {
+        "test_id": "T02",
+        "requirement_ids": [
+          "R8"
+        ],
+        "fault_type": "dropout",
+        "reason": "Simulates sensor signal dropout to verify emergency shutdown triggers safely."
+      },
+      {
+        "test_id": "T03",
+        "requirement_ids": [
+          "R10"
+        ],
+        "fault_type": "ramp_overshoot",
+        "reason": "Verifies fan deactivates when temperature drops below 25C."
+      },
+      {
+        "test_id": "T04",
+        "requirement_ids": [
+          "R7",
+          "R10"
+        ],
+        "fault_type": "stuck",
+        "reason": "Tests system behavior when temperature is stuck across thresholds."
+      },
+      {
+        "test_id": "T05",
+        "requirement_ids": [
+          "R8"
+        ],
+        "fault_type": "nominal",
+        "reason": "Validates continuous operation above 45C."
+      },
+      {
+        "test_id": "T06",
+        "requirement_ids": [
+          "R11"
+        ],
+        "fault_type": "dropout",
+        "reason": "Checks warning logging on sensor mismatch."
+      },
+      {
+        "test_id": "T07",
+        "requirement_ids": [
+          "R9"
+        ],
+        "fault_type": "nominal",
+        "reason": "Checks noise and speed characteristics."
+      },
+      {
+        "test_id": "T08",
+        "requirement_ids": [
+          "R11"
+        ],
+        "fault_type": "ramp_overshoot",
+        "reason": "Tests secondary sensor drift warning."
+      }
+    ]
+  }
+}

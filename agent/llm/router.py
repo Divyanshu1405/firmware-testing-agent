@@ -90,6 +90,11 @@ def _cache_key(prompt: str, model: str) -> str:
     return hashlib.sha256(raw.encode()).hexdigest()
 
 
+def is_offline() -> bool:
+    """Return True if offline mode is requested via env or module config."""
+    return LLM_OFFLINE or os.getenv("LLM_OFFLINE", "0") == "1"
+
+
 def _cache_path(key: str) -> Path:
     LLM_CACHE_DIR.mkdir(parents=True, exist_ok=True)
     return LLM_CACHE_DIR / f"{key}.json"
@@ -99,6 +104,10 @@ def _read_cache(key: str) -> dict | None:
     p = _cache_path(key)
     if p.exists():
         with open(p, encoding="utf-8") as f:
+            return json.load(f)
+    demo_p = Path("demo_cache") / f"{key}.json"
+    if demo_p.exists():
+        with open(demo_p, encoding="utf-8") as f:
             return json.load(f)
     return None
 
