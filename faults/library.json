@@ -1,0 +1,178 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "name": "Firmware Testing Fault Injection Library",
+  "version": "1.0.0",
+  "description": "Standardized fault injection primitives for test timeline generation, matching frozen contracts in PERSON_B_judge_and_evaluation.md.",
+  "fault_types": [
+    {
+      "id": "FAULT_STUCK_AT",
+      "name": "Stuck-At Fault",
+      "category": "stuck_at",
+      "action": "stuck",
+      "description": "Locks an input sensor channel to a constant fixed value for a given duration, simulating sensor lockup or rail short.",
+      "applicable_channels": ["temp_c", "humidity_pct", "gpio.PA5"],
+      "parameters": {
+        "channel": {"type": "string", "description": "Target input channel"},
+        "at_ms": {"type": "integer", "description": "Injection start timestamp in ms"},
+        "value": {"type": "number", "description": "Constant frozen value"},
+        "for_ms": {"type": "integer", "description": "Duration the channel remains frozen"}
+      },
+      "timeline_event_template": {
+        "at_ms": 2000,
+        "action": "stuck",
+        "channel": "temp_c",
+        "value": 25.0,
+        "for_ms": 5000
+      }
+    },
+    {
+      "id": "FAULT_DROPOUT",
+      "name": "Signal Dropout",
+      "category": "dropout",
+      "action": "dropout",
+      "description": "Simulates complete loss of signal or physical cable disconnection on an input line.",
+      "applicable_channels": ["temp_c", "humidity_pct", "i2c_bus"],
+      "parameters": {
+        "channel": {"type": "string", "description": "Target input channel"},
+        "at_ms": {"type": "integer", "description": "Start timestamp of disconnection in ms"},
+        "for_ms": {"type": "integer", "description": "Duration of disconnection in ms"}
+      },
+      "timeline_event_template": {
+        "at_ms": 3000,
+        "action": "dropout",
+        "channel": "temp_c",
+        "for_ms": 4000
+      }
+    },
+    {
+      "id": "FAULT_SPIKE",
+      "name": "Transient Spike",
+      "category": "spike",
+      "action": "spike",
+      "description": "Injects an abrupt, high-amplitude transient pulse on an analog or digital sensor channel.",
+      "applicable_channels": ["temp_c", "humidity_pct", "adc1"],
+      "parameters": {
+        "channel": {"type": "string", "description": "Target input channel"},
+        "at_ms": {"type": "integer", "description": "Spike occurrence timestamp in ms"},
+        "amplitude": {"type": "number", "description": "Peak amplitude deviation"},
+        "for_ms": {"type": "integer", "description": "Spike width/duration in ms"}
+      },
+      "timeline_event_template": {
+        "at_ms": 2500,
+        "action": "spike",
+        "channel": "temp_c",
+        "amplitude": 50.0,
+        "for_ms": 200
+      }
+    },
+    {
+      "id": "FAULT_GLITCH",
+      "name": "Sub-millisecond Glitch",
+      "category": "glitch",
+      "action": "glitch",
+      "description": "Single-sample or high-frequency instantaneous reading glitch causing out-of-range sensor readings.",
+      "applicable_channels": ["temp_c", "humidity_pct", "gpio.PA5"],
+      "parameters": {
+        "channel": {"type": "string", "description": "Target input channel"},
+        "at_ms": {"type": "integer", "description": "Glitch occurrence timestamp in ms"},
+        "value": {"type": "number", "description": "Glitch target value"},
+        "for_ms": {"type": "integer", "description": "Glitch pulse width in ms (typically 1-10 ms)"}
+      },
+      "timeline_event_template": {
+        "at_ms": 1800,
+        "action": "glitch",
+        "channel": "temp_c",
+        "value": -99.0,
+        "for_ms": 10
+      }
+    },
+    {
+      "id": "FAULT_DRIFT",
+      "name": "Sensor Calibration Drift",
+      "category": "drift",
+      "action": "drift",
+      "description": "Simulates gradual linear sensor degradation or thermal drift over extended operational windows.",
+      "applicable_channels": ["temp_c", "humidity_pct"],
+      "parameters": {
+        "channel": {"type": "string", "description": "Target input channel"},
+        "at_ms": {"type": "integer", "description": "Drift onset timestamp in ms"},
+        "to": {"type": "number", "description": "End value at completion of drift"},
+        "over_ms": {"type": "integer", "description": "Duration over which drift is applied in ms"}
+      },
+      "timeline_event_template": {
+        "at_ms": 2000,
+        "action": "drift",
+        "channel": "temp_c",
+        "to": 65.0,
+        "over_ms": 8000
+      }
+    },
+    {
+      "id": "FAULT_NOISE",
+      "name": "Stochastic Sensor Noise",
+      "category": "noise",
+      "action": "noise",
+      "description": "Adds zero-mean Gaussian or uniform noise to test software low-pass filtering and hysteresis logic.",
+      "applicable_channels": ["temp_c", "humidity_pct"],
+      "parameters": {
+        "channel": {"type": "string", "description": "Target input channel"},
+        "at_ms": {"type": "integer", "description": "Noise onset timestamp in ms"},
+        "amplitude": {"type": "number", "description": "Noise amplitude standard deviation (+/- sigma)"},
+        "for_ms": {"type": "integer", "description": "Duration of noise injection in ms"}
+      },
+      "timeline_event_template": {
+        "at_ms": 1500,
+        "action": "noise",
+        "channel": "humidity_pct",
+        "amplitude": 4.5,
+        "for_ms": 6000
+      }
+    },
+    {
+      "id": "FAULT_OSCILLATION",
+      "name": "Threshold Oscillation",
+      "category": "oscillation",
+      "action": "oscillation",
+      "description": "Oscillates an input signal across a decision boundary to expose rapid cycling or chatter defects.",
+      "applicable_channels": ["temp_c", "humidity_pct"],
+      "parameters": {
+        "channel": {"type": "string", "description": "Target input channel"},
+        "at_ms": {"type": "integer", "description": "Oscillation onset timestamp in ms"},
+        "center_value": {"type": "number", "description": "Center DC offset around which signal oscillates"},
+        "amplitude": {"type": "number", "description": "Peak-to-peak half-amplitude"},
+        "freq_hz": {"type": "number", "description": "Frequency in Hertz"},
+        "for_ms": {"type": "integer", "description": "Duration of oscillation in ms"}
+      },
+      "timeline_event_template": {
+        "at_ms": 2000,
+        "action": "oscillation",
+        "channel": "temp_c",
+        "center_value": 30.0,
+        "amplitude": 5.0,
+        "freq_hz": 2.0,
+        "for_ms": 5000
+      }
+    },
+    {
+      "id": "FAULT_CORRUPTED_UART",
+      "name": "Corrupted UART Frame",
+      "category": "corrupted_uart",
+      "action": "uart_garbage",
+      "description": "Injects byte corruption, baud mismatch, parity error, or truncated frames on UART communication channels.",
+      "applicable_channels": ["uart", "sysbus.usart2"],
+      "parameters": {
+        "channel": {"type": "string", "description": "Target serial communication channel"},
+        "at_ms": {"type": "integer", "description": "Corruption timestamp in ms"},
+        "corruption_type": {"type": "string", "enum": ["framing_error", "parity_error", "garbage_bytes"]},
+        "byte_count": {"type": "integer", "description": "Number of corrupted bytes injected"}
+      },
+      "timeline_event_template": {
+        "at_ms": 2200,
+        "action": "uart_garbage",
+        "channel": "uart",
+        "corruption_type": "framing_error",
+        "byte_count": 8
+      }
+    }
+  ]
+}
