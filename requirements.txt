@@ -1,0 +1,12 @@
+langgraph
+langchain-core
+langchain-google-genai
+langchain-ollama
+pydantic>=2
+python-dotenv
+jsonschema
+tenacity
+jinja2
+matplotlib
+pytest
+pytest-timeout

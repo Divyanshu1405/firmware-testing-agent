@@ -1,5 +1,9 @@
 {
-  "id": "R1",
-  "description": "Example firmware requirement",
-  "source": "spec.md"
+  "id": "R2",
+  "description": "When temp_c holds above 30C for at least 2000ms, the fan output must go high within 1000ms.",
+  "source": "README.md",
+  "source_line": 14,
+  "threshold": 30.0,
+  "time_value_ms": 1000,
+  "ambiguous": false
 }

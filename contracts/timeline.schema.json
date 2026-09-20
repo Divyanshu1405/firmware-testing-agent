@@ -1,0 +1,80 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "timeline.schema.json",
+  "title": "Timeline",
+  "type": "object",
+  "required": [
+    "test_id",
+    "requirement_ids",
+    "duration_ms",
+    "events"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "test_id": {
+      "type": "string"
+    },
+    "requirement_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "duration_ms": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "healed": {
+      "type": "boolean"
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "at_ms",
+          "action",
+          "channel"
+        ],
+        "additionalProperties": true,
+        "properties": {
+          "at_ms": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "set",
+              "ramp",
+              "step",
+              "dropout",
+              "stuck",
+              "spike",
+              "glitch",
+              "drift",
+              "uart_write",
+              "uart_garbage"
+            ]
+          },
+          "channel": {
+            "type": "string"
+          },
+          "value": {},
+          "to": {
+            "type": "number"
+          },
+          "over_ms": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "for_ms": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      }
+    }
+  }
+}

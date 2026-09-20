@@ -1,5 +1,10 @@
 {
-  "test_id": "T1",
-  "inputs": [],
-  "steps": []
+  "test_id": "T07",
+  "requirement_ids": ["R2"],
+  "duration_ms": 12000,
+  "events": [
+    { "at_ms": 0, "action": "set", "channel": "temp_c", "value": 25.0 },
+    { "at_ms": 2000, "action": "ramp", "channel": "temp_c", "to": 33.0, "over_ms": 4000 },
+    { "at_ms": 8000, "action": "dropout", "channel": "temp_c", "for_ms": 4000 }
+  ]
 }

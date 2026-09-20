@@ -1,0 +1,47 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\Users\lenovo\Desktop\New folder\50LPA\Blackbox\agent\run.py", line 140, in <module>
+    main()
+    ~~~~^^
+  File "C:\Users\lenovo\Desktop\New folder\50LPA\Blackbox\agent\run.py", line 88, in main
+    print(f"[run] report \u2192 {report_path}")
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2192' in position 13: character maps to <undefined>
+[run] firmware=dummy_fw.bin  spec=tests/fixtures/sample_spec.md
+[run] LLM_OFFLINE=True
+[DEBUG] T01 key=test_id plan=T01 llm=T01 differs=False
+[DEBUG] T01 key=requirement_ids plan=['R7'] llm=['R7'] differs=False
+[DEBUG] T01 key=fault_type plan=nominal llm=None differs=True
+[DEBUG] T01 actually forced fault_type to nominal
+[DEBUG] T02 key=test_id plan=T02 llm=T02 differs=False
+[DEBUG] T02 key=requirement_ids plan=['R8'] llm=['R8'] differs=False
+[DEBUG] T02 key=fault_type plan=dropout llm=None differs=True
+[DEBUG] T02 actually forced fault_type to dropout
+[DEBUG] T03 key=test_id plan=T03 llm=T03 differs=False
+[DEBUG] T03 key=requirement_ids plan=['R10'] llm=['R10'] differs=False
+[DEBUG] T03 key=fault_type plan=ramp_overshoot llm=None differs=True
+[DEBUG] T03 actually forced fault_type to ramp_overshoot
+[DEBUG] T04 key=test_id plan=T04 llm=T04 differs=False
+[DEBUG] T04 key=requirement_ids plan=['R7', 'R10'] llm=['R7', 'R10'] differs=False
+[DEBUG] T04 key=fault_type plan=stuck llm=None differs=True
+[DEBUG] T04 actually forced fault_type to stuck
+[DEBUG] T05 key=test_id plan=T05 llm=T05 differs=False
+[DEBUG] T05 key=requirement_ids plan=['R8'] llm=['R8'] differs=False
+[DEBUG] T05 key=fault_type plan=nominal llm=None differs=True
+[DEBUG] T05 actually forced fault_type to nominal
+[DEBUG] T06 key=test_id plan=T06 llm=T06 differs=False
+[DEBUG] T06 key=requirement_ids plan=['R11'] llm=['R11'] differs=False
+[DEBUG] T06 key=fault_type plan=dropout llm=None differs=True
+[DEBUG] T06 actually forced fault_type to dropout
+[DEBUG] T07 key=test_id plan=T07 llm=T07 differs=False
+[DEBUG] T07 key=requirement_ids plan=['R9'] llm=['R9'] differs=False
+[DEBUG] T07 key=fault_type plan=nominal llm=None differs=True
+[DEBUG] T07 actually forced fault_type to nominal
+[DEBUG] T08 key=test_id plan=T08 llm=T08 differs=False
+[DEBUG] T08 key=requirement_ids plan=['R11'] llm=['R11'] differs=False
+[DEBUG] T08 key=fault_type plan=ramp_overshoot llm=None differs=True
+[DEBUG] T08 actually forced fault_type to ramp_overshoot

@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Firmware Test Report — {{ firmware_path }}</title>
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      line-height: 1.6;
+    }
+
+    header {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      border-bottom: 2px solid #334155;
+      padding: 2rem 3rem;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.6rem;
+      color: #38bdf8;
+    }
+
+    header p {
+      margin: 0.25rem 0 0;
+      font-size: 0.85rem;
+      color: #94a3b8;
+    }
+
+    main {
+      padding: 2rem 3rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    section {
+      margin-bottom: 2.5rem;
+    }
+
+    h2 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #7dd3fc;
+      border-bottom: 1px solid #1e293b;
+      padding-bottom: 0.4rem;
+      margin-bottom: 1rem;
+    }
+
+    /* verdict summary banner */
+    .banner {
+      padding: 1rem 1.5rem;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+    }
+
+    .banner.pass {
+      background: #052e16;
+      color: #4ade80;
+      border: 1px solid #16a34a;
+    }
+
+    .banner.fail {
+      background: #450a0a;
+      color: #f87171;
+      border: 1px solid #dc2626;
+    }
+
+    /* tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+
+    th {
+      background: #1e293b;
+      color: #94a3b8;
+      padding: 0.55rem 0.75rem;
+      text-align: left;
+      border-bottom: 1px solid #334155;
+    }
+
+    td {
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid #1e293b;
+    }
+
+    tr:hover td {
+      background: #1a2235;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.15rem 0.55rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+
+    .badge-pass {
+      background: #052e16;
+      color: #4ade80;
+    }
+
+    .badge-fail {
+      background: #450a0a;
+      color: #f87171;
+    }
+
+    .badge-inc {
+      background: #1c1917;
+      color: #fbbf24;
+    }
+
+    /* requirements */
+    .req-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .req-card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      padding: 0.75rem 1rem;
+    }
+
+    .req-card .req-id {
+      font-weight: 700;
+      color: #38bdf8;
+      margin-right: 0.5rem;
+    }
+
+    .req-card .req-meta {
+      font-size: 0.75rem;
+      color: #64748b;
+      margin-top: 0.3rem;
+    }
+
+    /* explanations */
+    .explain-block {
+      background: #1c1917;
+      border-left: 3px solid #f59e0b;
+      padding: 0.75rem 1rem;
+      border-radius: 0 6px 6px 0;
+      margin-bottom: 0.75rem;
+      font-size: 0.85rem;
+    }
+
+    .explain-block .test-label {
+      font-weight: 700;
+      color: #fbbf24;
+      margin-bottom: 0.3rem;
+    }
+
+    /* provenance footer */
+    footer {
+      background: #0f1117;
+      border-top: 1px solid #1e293b;
+      padding: 1.5rem 3rem;
+      font-size: 0.78rem;
+      color: #64748b;
+    }
+
+    footer h3 {
+      color: #94a3b8;
+      margin: 0 0 0.5rem;
+      font-size: 0.85rem;
+    }
+
+    .prov-table td,
+    .prov-table th {
+      padding: 0.35rem 0.6rem;
+    }
+
+    .tag-cached {
+      color: #4ade80;
+    }
+
+    .tag-network {
+      color: #60a5fa;
+    }
+
+    /* no-data notice */
+    .empty {
+      color: #475569;
+      font-style: italic;
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <h1>Firmware Test Report</h1>
+    <p>Firmware: <code>{{ firmware_path }}</code></p>
+  </header>
+
+  <main>
+
+    {# ── Backend Banner ── #}
+    {% if demo_failure %}
+    <div class="banner" style="background:#450a0a; color:#f87171; border: 1px solid #dc2626;">
+      ⚠ SIMULATED FAILURE
+    </div>
+    {% elif backend_name == "SIMULATED BACKEND" %}
+    <div class="banner" style="background:#450a0a; color:#f87171; border: 1px solid #dc2626;">
+      ⚠ WARNING: SIMULATED BACKEND
+    </div>
+    {% else %}
+    <div class="banner" style="background:#1e293b; color:#94a3b8; border: 1px solid #334155;">
+      Backend: {{ backend_name }}
+    </div>
+    {% endif %}
+
+    {# ── verdict summary ── #}
+    {% if has_fails %}
+    <div class="banner fail" style="margin-top:1rem;">⚠ One or more tests FAILED or returned INCONCLUSIVE</div>
+    {% else %}
+    <div class="banner pass" style="margin-top:1rem;">✓ All tests PASSED</div>
+    {% endif %}
+
+    {# ── Tests Table ── #}
+    <section>
+      <h2>Tests Summary ({{ test_rows | length }})</h2>
+      {% if test_rows %}
+      <table>
+        <thead>
+          <tr>
+            <th>Test ID</th>
+            <th>Requirements</th>
+            <th>Reason</th>
+            <th>Fault</th>
+            <th>Verdict</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in test_rows %}
+          <tr>
+            <td>{{ row.test_id }}</td>
+            <td>{{ row.requirement_ids | join(', ') }}</td>
+            <td>{{ row.reason }}</td>
+            <td>{{ row.fault }}</td>
+            <td>
+              {% if row.verdict == 'PASS' %}
+              <span class="badge badge-pass">PASS</span>
+              {% elif row.verdict == 'FAIL' %}
+              <span class="badge badge-fail">FAIL</span>
+              {% elif row.verdict == 'DROPPED' %}
+              <span class="badge" style="background:#334155; color:#cbd5e1;">DROPPED</span>
+              {% else %}
+              <span class="badge badge-inc">{{ row.verdict }}</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="empty">No tests generated.</p>
+      {% endif %}
+    </section>
+
+    {# ── Requirement Coverage ── #}
+    <section>
+      <h2>Requirement Coverage</h2>
+      {% if req_cov %}
+      <table>
+        <thead>
+          <tr>
+            <th>Requirement</th>
+            <th>Tests</th>
+            <th>Flags</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for req, data in req_cov.items() %}
+          <tr>
+            <td><strong>{{ req }}</strong></td>
+            <td>{{ data.tests | join(', ') }}</td>
+            <td>
+              {% if data.dropped %}
+              <span class="badge badge-fail">Missing/Dropped</span>
+              {% endif %}
+              {% if data.healed %}
+              <span class="badge badge-inc">Timeline Healed: {{ data.healed | join(', ') }}</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="empty">No requirements available for mapping.</p>
+      {% endif %}
+    </section>
+
+    {# ── Failure Analysis ── #}
+    {% if failures_data %}
+    <section>
+      <h2>Failures Explanations & Evidence</h2>
+      {% for fail in failures_data %}
+      <div class="explain-block" style="margin-bottom:2rem;">
+        <div class="test-label">Test {{ fail.test_id }}</div>
+        <p style="margin: 0.5rem 0;"><strong>Evidence:</strong> {{ fail.evidence }} <span style="color:#64748b">(at {{
+            fail.time_ms }} ms)</span></p>
+        <p style="margin: 0.5rem 0;"><strong>Code Reference:</strong> <code>{{ fail.code_lines }}</code></p>
+        <p style="background:#1e293b; padding:0.75rem; border-radius:4px; font-style:italic;">
+          <strong>Hypothesis:</strong><br />
+          {{ fail.explanation }}
+        </p>
+
+        {# Plotting Canvas #}
+        <div style="background:#0f1117; padding: 1rem; border-radius:6px; margin-top: 1rem; text-align: center;">
+          <img src="data:image/png;base64,{{ fail.plot_b64 }}" style="max-width: 100%; border-radius: 6px;"
+            alt="Trace Plot" />
+        </div>
+      </div>
+      {% endfor %}
+    </section>
+    {% endif %}
+
+  </main>
+
+  {# ── provenance footer ── #}
+  <footer>
+    <h3>LLM Provenance</h3>
+    {% if prov_entries %}
+    <table class="prov-table">
+      <thead>
+        <tr>
+          <th>Timestamp</th>
+          <th>Step</th>
+          <th>Model</th>
+          <th>Source</th>
+          <th>Hash</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for e in prov_entries %}
+        <tr>
+          <td>{{ e.ts }}</td>
+          <td>{{ e.step }}</td>
+          <td>{{ e.model }}</td>
+          <td>
+            {% if e.cached %}
+            <span class="tag-cached">cache</span>
+            {% else %}
+            <span class="tag-network">network</span>
+            {% endif %}
+          </td>
+          <td style="font-family:monospace">{{ e.prompt_hash[:10] }}…</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="empty">No LLM calls recorded (mock run or offline replay).</p>
+    {% endif %}
+  </footer>
+
+</body>
+
+</html>

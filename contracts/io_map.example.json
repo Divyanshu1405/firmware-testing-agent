@@ -1,0 +1,12 @@
+{
+  "firmware": "original.elf",
+  "platform": "platforms/boards/stm32f4_discovery.repl",
+  "uart": "sysbus.usart2",
+  "inputs": {
+    "temp_c": { "kind": "adc", "peripheral": "sysbus.adc1", "channel": 0, "scale": null }
+  },
+  "outputs": {
+    "fan": { "kind": "gpio", "pin": "gpioa.5" }
+  },
+  "notes": []
+}

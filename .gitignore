@@ -35,6 +35,9 @@ yarn-error.log*
 
 # OS & Editor Artifacts
 .DS_Store
+.vs/
+out/
+.vs/
 Thumbs.db
 *.swp
 *.swo
