@@ -1,13 +1,19 @@
-import React from "react";
-import { createRoot } from "react-dom/client";
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import { BrowserRouter } from 'react-router-dom';
+import App from './App';
+import './index.css';
+import ErrorBoundary from "./components/ErrorBoundary";
+import { PipelineProvider } from './hooks/usePipeline';
 
-function App() {
-  return (
-    <main style={{ fontFamily: "sans-serif", padding: 32 }}>
-      <h1>PS3 Firmware Testing Agent</h1>
-      <p>Bare-bones frontend. Connect to the FastAPI backend next.</p>
-    </main>
-  );
-}
-
-createRoot(document.getElementById("root")).render(<App />);
+ReactDOM.createRoot(document.getElementById('root')).render(
+ <React.StrictMode>
+  <BrowserRouter>
+    <ErrorBoundary>
+      <PipelineProvider>
+        <App />
+      </PipelineProvider>
+    </ErrorBoundary>
+  </BrowserRouter>
+</React.StrictMode>
+);

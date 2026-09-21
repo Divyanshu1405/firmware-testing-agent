@@ -82,49 +82,34 @@ class RenodeBackend:
 
         # 1. Firmware existence and ELF validation
         if not firmware.is_file():
-            trace["events"].append({
-                "t_ms": 0,
-                "kind": "sim_error",
-                "detail": f"Firmware binary not found: {firmware}",
-            })
+            trace["end_reason"] = "sim_error"
+            trace["error_detail"] = f"Firmware binary not found: {firmware}"
             return trace
 
         if not is_elf_file(firmware):
-            trace["events"].append({
-                "t_ms": 0,
-                "kind": "sim_error",
-                "detail": f"Firmware '{firmware.name}' is not a valid ELF binary.",
-            })
+            trace["end_reason"] = "sim_error"
+            trace["error_detail"] = f"Firmware '{firmware.name}' is not a valid ELF binary."
             return trace
 
         # 2. Check Renode executable availability
         renode_bin = find_renode()
         if not renode_bin:
-            trace["events"].append({
-                "t_ms": 0,
-                "kind": "sim_error",
-                "detail": "INFRASTRUCTURE_ERROR: Renode executable not found on system PATH or default installation path.",
-            })
+            trace["end_reason"] = "sim_error"
+            trace["error_detail"] = "INFRASTRUCTURE_ERROR: Renode executable not found on system PATH or default installation path."
             return trace
 
         # 3. Check duration safety limit
         if duration_ms > MAX_DURATION_MS:
-            trace["events"].append({
-                "t_ms": 0,
-                "kind": "sim_error",
-                "detail": f"Timeline duration ({duration_ms} ms) exceeds safety maximum limit of {MAX_DURATION_MS} ms.",
-            })
+            trace["end_reason"] = "sim_error"
+            trace["error_detail"] = f"Timeline duration ({duration_ms} ms) exceeds safety maximum limit of {MAX_DURATION_MS} ms."
             return trace
 
         # 4. Lint timeline against I/O map
         active_io_map = io_map or {}
         lint_errors = lint_timeline(timeline, active_io_map)
         if lint_errors:
-            trace["events"].append({
-                "t_ms": 0,
-                "kind": "sim_error",
-                "detail": "Timeline linting failed: " + "; ".join(lint_errors),
-            })
+            trace["end_reason"] = "sim_error"
+            trace["error_detail"] = "Timeline linting failed: " + "; ".join(lint_errors)
             return trace
 
         # 5. Compile simulation steps and input samples
@@ -132,11 +117,8 @@ class RenodeBackend:
             timeline, duration_ms, active_io_map
         )
         if compile_err:
-            trace["events"].append({
-                "t_ms": 0,
-                "kind": "sim_error",
-                "detail": f"Event schedule compilation error: {compile_err}",
-            })
+            trace["end_reason"] = "sim_error"
+            trace["error_detail"] = f"Event schedule compilation error: {compile_err}"
             return trace
         trace["samples"].extend(input_samples)
 
@@ -175,11 +157,8 @@ class RenodeBackend:
                     trace["samples"].extend(self._parse_asciinema(cast_file))
                 return trace
             except OSError as exc:
-                trace["events"].append({
-                    "t_ms": 0,
-                    "kind": "sim_error",
-                    "detail": f"INFRASTRUCTURE_ERROR: Failed to launch Renode process: {exc}",
-                })
+                trace["end_reason"] = "sim_error"
+                trace["error_detail"] = f"INFRASTRUCTURE_ERROR: Failed to launch Renode process: {exc}"
                 return trace
 
             # 7. Parse UART output with virtual timestamps

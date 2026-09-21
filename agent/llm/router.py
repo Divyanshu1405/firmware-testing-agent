@@ -53,6 +53,7 @@ PROVENANCE_LOG = Path("llm_provenance.jsonl")
 _RPM_MIN_INTERVAL: dict[str, float] = {
     "gemini-2.5-pro": 13.0,
     "gemini-2.5-flash": 6.5,
+    "gemini-3.6-flash": 6.5,
 }
 _last_call_time: dict[str, float] = {}  # model_name → epoch seconds
 _gemini_exhausted: bool = False
@@ -165,28 +166,42 @@ def _call_gemini(prompt: str, model: str) -> str:
     if not GEMINI_API_KEY:
         raise _GeminiError("GEMINI_API_KEY is not set")
 
-    # Proactive RPM spacer — fires before the network call (tenacity retries
-    # are the second layer for TPM limits or burst misses)
-    _rpm_wait(model)
+    # Map deprecated models to active Gemini models for live API calls
+    _LIVE_MODEL_ALIASES = {
+        "gemini-2.5-pro": "gemini-3.6-flash",
+        "gemini-2.5-flash": "gemini-3.6-flash",
+    }
+    live_model = _LIVE_MODEL_ALIASES.get(model, model)
 
     try:
         llm = ChatGoogleGenerativeAI(
-            model=model,
+            model=live_model,
             google_api_key=GEMINI_API_KEY,
             temperature=LLM_TEMPERATURE,
         )
         response = llm.invoke([HumanMessage(content=prompt)])
-        return response.content  # type: ignore[return-value]
+        content = response.content
+        if isinstance(content, list):
+            parts = []
+            for block in content:
+                if isinstance(block, dict) and "text" in block:
+                    parts.append(block["text"])
+                elif isinstance(block, str):
+                    parts.append(block)
+            return "\n".join(parts)
+        return str(content)
     except Exception as exc:
         msg = str(exc).lower()
         if "per day" in msg or "daily" in msg or "freetier" in msg or "perprojectpermodel" in msg or "resource_exhausted" in msg:
             _gemini_exhausted = True
             raise _GeminiError(f"Gemini API quota exhausted: {exc}") from exc
-        if "429" in msg or "quota" in msg or "rate" in msg:
+        if "429" in msg or "quota" in msg or "rate_limit" in msg:
             raise _RateLimitError(str(exc)) from exc
-        if "api key" in msg or "invalid" in msg or "401" in msg or "403" in msg:
+        if "api key" in msg or "invalid" in msg or "401" in msg or "403" in msg or "400" in msg or "404" in msg or "not_found" in msg or "refused" in msg:
+            _gemini_exhausted = True
             raise _GeminiError(str(exc)) from exc
-        raise _RateLimitError(str(exc)) from exc  # treat unknown as retryable
+        # Only treat actual rate limit or transient network issues as retryable
+        raise _GeminiError(str(exc)) from exc
 
 
 @retry(
@@ -218,12 +233,13 @@ def _call_ollama(prompt: str, model: str) -> str:
         return response.content  # type: ignore[return-value]
     except Exception as exc:
         msg = str(exc).lower()
-        if "10061" in msg or "connection refused" in msg or "connecterror" in msg or "failed to connect" in msg:
+        if "10061" in msg or "winerror" in msg or "connection refused" in msg or "connecterror" in msg or "failed to connect" in msg or "refused" in msg:
             _ollama_unavailable = True
             raise RuntimeError(f"Ollama daemon not reachable at {OLLAMA_BASE_URL}: {exc}") from exc
         if "429" in msg or "rate" in msg:
             raise _RateLimitError(str(exc)) from exc
-        raise
+        _ollama_unavailable = True
+        raise RuntimeError(f"Ollama call failed: {exc}") from exc
 
 
 # ── public API ────────────────────────────────────────────────────────────────
@@ -261,6 +277,13 @@ def ask_llm(
 
     # ── cache hit ───────────────────────────────────────────────────────────
     cached_payload = _read_cache(cache_key)
+    if cached_payload is None:
+        for legacy_model in ["gemini-2.5-flash", "gemini-2.5-pro"]:
+            alt_key = _cache_key(prompt, legacy_model)
+            cached_payload = _read_cache(alt_key)
+            if cached_payload is not None:
+                break
+
     if cached_payload is not None:
         _log_provenance(
             cached_payload.get("model_used", gemini_model),

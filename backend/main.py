@@ -136,6 +136,13 @@ def get_default_spec() -> str:
         "4. Reported relative humidity shall remain within physical bounds between 0% and 100% RH.\n"
         "5. Reported temperature shall remain within physical limits of -40 deg C to +125 deg C.\n"
         "6. The firmware shall execute continuously without triggering HardFault or reset loops.\n"
+        "# Firmware Functional Specification\n\n"
+        "1. The system SHALL periodically transmit telemetry frames over USART2 every 2000 ms.\n"
+        "2. Under normal operation, the UART transmission SHALL contain 'Humidity: %d Temperature: %d'.\n"
+        "3. When the Si7021 sensor returns an error (0xFFFF), the firmware SHALL transmit 'Error'.\n"
+        "4. Reported relative humidity SHALL remain within physical bounds between 0% and 100% RH.\n"
+        "5. Reported temperature SHALL remain within physical limits of -40 deg C to +125 deg C.\n"
+        "6. The firmware SHALL execute continuously without triggering HardFault or reset loops.\n"
     )
 
 
